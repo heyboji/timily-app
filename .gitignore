@@ -1,0 +1,27 @@
+# Xcode
+DerivedData/
+build/
+*.xcuserstate
+*.xcscmblueprint
+xcuserdata/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# macOS
+.DS_Store
+
+# Local environment
+*.moved-aside
+*.xccheckout
+
+# Local documentation and agent tooling
+/CHANGELOG.md
+/CLAUDE.md
+/AGENTS.md
+/docs/
+/.claude/
+/.agents/
+/.codex/
+graphify-out/

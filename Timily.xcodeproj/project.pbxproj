@@ -1,0 +1,346 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		AA1000000000000000000001 /* TimilyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000001 /* TimilyApp.swift */; };
+		AA1000000000000000000002 /* ModelEnums.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000002 /* ModelEnums.swift */; };
+		AA1000000000000000000003 /* Project.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000003 /* Project.swift */; };
+		AA1000000000000000000004 /* TimeEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000004 /* TimeEntry.swift */; };
+		AA1000000000000000000005 /* ActivitySegment.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000005 /* ActivitySegment.swift */; };
+		AA1000000000000000000006 /* AssignmentRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000006 /* AssignmentRule.swift */; };
+		AA1000000000000000000007 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000007 /* AppSettings.swift */; };
+		AA1000000000000000000008 /* PersistenceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000008 /* PersistenceController.swift */; };
+		AA1000000000000000000009 /* MainWindowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000009 /* MainWindowView.swift */; };
+		AA1000000000000000000010 /* MenuBarContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000010 /* MenuBarContentView.swift */; };
+		AA1000000000000000000011 /* TimilyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000011 /* TimilyTests.swift */; };
+		AA1000000000000000000012 /* SidebarDestination.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000012 /* SidebarDestination.swift */; };
+		AA1000000000000000000013 /* ProjectsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000013 /* ProjectsViewModel.swift */; };
+		AA1000000000000000000014 /* ProjectEditorState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000014 /* ProjectEditorState.swift */; };
+		AA1000000000000000000015 /* ProjectColorOption.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000015 /* ProjectColorOption.swift */; };
+		AA1000000000000000000016 /* Color+ProjectHex.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000016 /* Color+ProjectHex.swift */; };
+		AA1000000000000000000017 /* ProjectEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000017 /* ProjectEditorView.swift */; };
+		AA1000000000000000000018 /* ProjectRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000018 /* ProjectRowView.swift */; };
+		AA1000000000000000000019 /* ProjectsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000019 /* ProjectsView.swift */; };
+		AA1000000000000000000020 /* ProjectsViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000020 /* ProjectsViewModelTests.swift */; };
+		AA1000000000000000000021 /* TimeRange.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000021 /* TimeRange.swift */; };
+		AA1000000000000000000022 /* TimeEntryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000022 /* TimeEntryService.swift */; };
+		AA1000000000000000000023 /* IdleDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000023 /* IdleDetector.swift */; };
+		AA1000000000000000000024 /* BackupArchive.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000024 /* BackupArchive.swift */; };
+		AA1000000000000000000025 /* BackupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000025 /* BackupService.swift */; };
+		AA1000000000000000000026 /* TimeEntryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000026 /* TimeEntryServiceTests.swift */; };
+		AA1000000000000000000027 /* IdleDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000027 /* IdleDetectorTests.swift */; };
+		AA1000000000000000000028 /* BackupServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000028 /* BackupServiceTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		AA9000000000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AA6000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA4000000000000000000001;
+			remoteInfo = Timily;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		AA2000000000000000000001 /* Timily.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Timily.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA2000000000000000000002 /* TimilyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TimilyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA2100000000000000000001 /* TimilyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimilyApp.swift; sourceTree = "<group>"; };
+		AA2100000000000000000002 /* ModelEnums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelEnums.swift; sourceTree = "<group>"; };
+		AA2100000000000000000003 /* Project.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Project.swift; sourceTree = "<group>"; };
+		AA2100000000000000000004 /* TimeEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeEntry.swift; sourceTree = "<group>"; };
+		AA2100000000000000000005 /* ActivitySegment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivitySegment.swift; sourceTree = "<group>"; };
+		AA2100000000000000000006 /* AssignmentRule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssignmentRule.swift; sourceTree = "<group>"; };
+		AA2100000000000000000007 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
+		AA2100000000000000000008 /* PersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceController.swift; sourceTree = "<group>"; };
+		AA2100000000000000000009 /* MainWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowView.swift; sourceTree = "<group>"; };
+		AA2100000000000000000010 /* MenuBarContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarContentView.swift; sourceTree = "<group>"; };
+		AA2100000000000000000011 /* TimilyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimilyTests.swift; sourceTree = "<group>"; };
+		AA2100000000000000000012 /* SidebarDestination.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarDestination.swift; sourceTree = "<group>"; };
+		AA2100000000000000000013 /* ProjectsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsViewModel.swift; sourceTree = "<group>"; };
+		AA2100000000000000000014 /* ProjectEditorState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectEditorState.swift; sourceTree = "<group>"; };
+		AA2100000000000000000015 /* ProjectColorOption.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectColorOption.swift; sourceTree = "<group>"; };
+		AA2100000000000000000016 /* Color+ProjectHex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+ProjectHex.swift"; sourceTree = "<group>"; };
+		AA2100000000000000000017 /* ProjectEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectEditorView.swift; sourceTree = "<group>"; };
+		AA2100000000000000000018 /* ProjectRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectRowView.swift; sourceTree = "<group>"; };
+		AA2100000000000000000019 /* ProjectsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsView.swift; sourceTree = "<group>"; };
+		AA2100000000000000000020 /* ProjectsViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsViewModelTests.swift; sourceTree = "<group>"; };
+		AA2100000000000000000021 /* TimeRange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeRange.swift; sourceTree = "<group>"; };
+		AA2100000000000000000022 /* TimeEntryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeEntryService.swift; sourceTree = "<group>"; };
+		AA2100000000000000000023 /* IdleDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdleDetector.swift; sourceTree = "<group>"; };
+		AA2100000000000000000024 /* BackupArchive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupArchive.swift; sourceTree = "<group>"; };
+		AA2100000000000000000025 /* BackupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupService.swift; sourceTree = "<group>"; };
+		AA2100000000000000000026 /* TimeEntryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeEntryServiceTests.swift; sourceTree = "<group>"; };
+		AA2100000000000000000027 /* IdleDetectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdleDetectorTests.swift; sourceTree = "<group>"; };
+		AA2100000000000000000028 /* BackupServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupServiceTests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		AA5000000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA5000000000000000000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		AA3000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				AA3000000000000000000002 /* Timily */,
+				AA3000000000000000000015 /* TimilyTests */,
+				AA3000000000000000000016 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		AA3000000000000000000002 /* Timily */ = {
+			isa = PBXGroup;
+			children = (
+				AA2100000000000000000001 /* TimilyApp.swift */,
+				AA3000000000000000000003 /* Models */,
+				AA3000000000000000000004 /* Services */,
+				AA3000000000000000000006 /* ViewModels */,
+				AA3000000000000000000007 /* Views */,
+				AA3000000000000000000013 /* Utilities */,
+				AA3000000000000000000014 /* Resources */,
+			);
+			path = Timily;
+			sourceTree = "<group>";
+		};
+		AA3000000000000000000003 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				AA2100000000000000000002 /* ModelEnums.swift */,
+				AA2100000000000000000003 /* Project.swift */,
+				AA2100000000000000000004 /* TimeEntry.swift */,
+				AA2100000000000000000005 /* ActivitySegment.swift */,
+				AA2100000000000000000006 /* AssignmentRule.swift */,
+				AA2100000000000000000007 /* AppSettings.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		AA3000000000000000000004 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				AA2100000000000000000008 /* PersistenceController.swift */,
+				AA2100000000000000000021 /* TimeRange.swift */,
+				AA2100000000000000000022 /* TimeEntryService.swift */,
+				AA2100000000000000000023 /* IdleDetector.swift */,
+				AA2100000000000000000024 /* BackupArchive.swift */,
+				AA2100000000000000000025 /* BackupService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		AA3000000000000000000006 /* ViewModels */ = {isa = PBXGroup; children = (AA2100000000000000000013 /* ProjectsViewModel.swift */,); path = ViewModels; sourceTree = "<group>"; };
+		AA3000000000000000000007 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				AA2100000000000000000009 /* MainWindowView.swift */,
+				AA2100000000000000000012 /* SidebarDestination.swift */,
+				AA3000000000000000000005 /* MenuBar */,
+				AA3000000000000000000008 /* Dashboard */,
+				AA3000000000000000000009 /* Activity */,
+				AA3000000000000000000010 /* Projects */,
+				AA3000000000000000000011 /* Settings */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		AA3000000000000000000005 /* MenuBar */ = {isa = PBXGroup; children = (AA2100000000000000000010 /* MenuBarContentView.swift */,); path = MenuBar; sourceTree = "<group>"; };
+		AA3000000000000000000008 /* Dashboard */ = {isa = PBXGroup; children = (); path = Dashboard; sourceTree = "<group>"; };
+		AA3000000000000000000009 /* Activity */ = {isa = PBXGroup; children = (); path = Activity; sourceTree = "<group>"; };
+		AA3000000000000000000010 /* Projects */ = {
+			isa = PBXGroup;
+			children = (
+				AA2100000000000000000019 /* ProjectsView.swift */,
+				AA2100000000000000000018 /* ProjectRowView.swift */,
+				AA2100000000000000000017 /* ProjectEditorView.swift */,
+				AA2100000000000000000014 /* ProjectEditorState.swift */,
+				AA2100000000000000000015 /* ProjectColorOption.swift */,
+			);
+			path = Projects;
+			sourceTree = "<group>";
+		};
+		AA3000000000000000000011 /* Settings */ = {isa = PBXGroup; children = (); path = Settings; sourceTree = "<group>"; };
+		AA3000000000000000000013 /* Utilities */ = {isa = PBXGroup; children = (AA2100000000000000000016 /* Color+ProjectHex.swift */,); path = Utilities; sourceTree = "<group>"; };
+		AA3000000000000000000014 /* Resources */ = {isa = PBXGroup; children = (); path = Resources; sourceTree = "<group>"; };
+		AA3000000000000000000015 /* TimilyTests */ = {
+			isa = PBXGroup;
+			children = (
+				AA2100000000000000000011 /* TimilyTests.swift */,
+				AA2100000000000000000020 /* ProjectsViewModelTests.swift */,
+				AA2100000000000000000026 /* TimeEntryServiceTests.swift */,
+				AA2100000000000000000027 /* IdleDetectorTests.swift */,
+				AA2100000000000000000028 /* BackupServiceTests.swift */,
+			);
+			path = TimilyTests;
+			sourceTree = "<group>";
+		};
+		AA3000000000000000000016 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AA2000000000000000000001 /* Timily.app */,
+				AA2000000000000000000002 /* TimilyTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		AA4000000000000000000001 /* Timily */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA8000000000000000000002 /* Build configuration list for PBXNativeTarget "Timily" */;
+			buildPhases = (
+				AA5000000000000000000001 /* Sources */,
+				AA5000000000000000000002 /* Frameworks */,
+				AA5000000000000000000003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Timily;
+			productName = Timily;
+			productReference = AA2000000000000000000001 /* Timily.app */;
+			productType = "com.apple.product-type.application";
+		};
+		AA4000000000000000000002 /* TimilyTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA8000000000000000000003 /* Build configuration list for PBXNativeTarget "TimilyTests" */;
+			buildPhases = (
+				AA5000000000000000000004 /* Sources */,
+				AA5000000000000000000005 /* Frameworks */,
+				AA5000000000000000000006 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AA9000000000000000000002 /* PBXTargetDependency */,
+			);
+			name = TimilyTests;
+			productName = TimilyTests;
+			productReference = AA2000000000000000000002 /* TimilyTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		AA6000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2660;
+				LastUpgradeCheck = 2660;
+				TargetAttributes = {
+					AA4000000000000000000001 = {CreatedOnToolsVersion = 26.6; };
+					AA4000000000000000000002 = {CreatedOnToolsVersion = 26.6; TestTargetID = AA4000000000000000000001; };
+				};
+			};
+			buildConfigurationList = AA8000000000000000000001 /* Build configuration list for PBXProject "Timily" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (en, Base,);
+			mainGroup = AA3000000000000000000001;
+			productRefGroup = AA3000000000000000000016 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				AA4000000000000000000001 /* Timily */,
+				AA4000000000000000000002 /* TimilyTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		AA5000000000000000000003 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		AA5000000000000000000006 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		AA5000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA1000000000000000000001 /* TimilyApp.swift in Sources */,
+				AA1000000000000000000002 /* ModelEnums.swift in Sources */,
+				AA1000000000000000000003 /* Project.swift in Sources */,
+				AA1000000000000000000004 /* TimeEntry.swift in Sources */,
+				AA1000000000000000000005 /* ActivitySegment.swift in Sources */,
+				AA1000000000000000000006 /* AssignmentRule.swift in Sources */,
+				AA1000000000000000000007 /* AppSettings.swift in Sources */,
+				AA1000000000000000000008 /* PersistenceController.swift in Sources */,
+				AA1000000000000000000009 /* MainWindowView.swift in Sources */,
+				AA1000000000000000000010 /* MenuBarContentView.swift in Sources */,
+				AA1000000000000000000012 /* SidebarDestination.swift in Sources */,
+				AA1000000000000000000013 /* ProjectsViewModel.swift in Sources */,
+				AA1000000000000000000014 /* ProjectEditorState.swift in Sources */,
+				AA1000000000000000000015 /* ProjectColorOption.swift in Sources */,
+				AA1000000000000000000016 /* Color+ProjectHex.swift in Sources */,
+				AA1000000000000000000017 /* ProjectEditorView.swift in Sources */,
+				AA1000000000000000000018 /* ProjectRowView.swift in Sources */,
+				AA1000000000000000000019 /* ProjectsView.swift in Sources */,
+				AA1000000000000000000021 /* TimeRange.swift in Sources */,
+				AA1000000000000000000022 /* TimeEntryService.swift in Sources */,
+				AA1000000000000000000023 /* IdleDetector.swift in Sources */,
+				AA1000000000000000000024 /* BackupArchive.swift in Sources */,
+				AA1000000000000000000025 /* BackupService.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA5000000000000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA1000000000000000000011 /* TimilyTests.swift in Sources */,
+				AA1000000000000000000020 /* ProjectsViewModelTests.swift in Sources */,
+				AA1000000000000000000026 /* TimeEntryServiceTests.swift in Sources */,
+				AA1000000000000000000027 /* IdleDetectorTests.swift in Sources */,
+				AA1000000000000000000028 /* BackupServiceTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AA9000000000000000000002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA4000000000000000000001 /* Timily */;
+			targetProxy = AA9000000000000000000001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		AA7000000000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; SDKROOT = macosx; SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)"; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; }; name = Debug; };
+		AA7000000000000000000002 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; SDKROOT = macosx; SWIFT_COMPILATION_MODE = wholemodule; }; name = Release; };
+		AA7000000000000000000003 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; ENABLE_APP_SANDBOX = NO; ENABLE_HARDENED_RUNTIME = NO; ENABLE_TESTABILITY = YES; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity"; INFOPLIST_KEY_LSUIElement = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.yauhenin.timily; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_APPROACHABLE_CONCURRENCY = YES; SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_STRICT_CONCURRENCY = complete; SWIFT_VERSION = 6.0; }; name = Debug; };
+		AA7000000000000000000004 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; ENABLE_APP_SANDBOX = NO; ENABLE_HARDENED_RUNTIME = NO; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity"; INFOPLIST_KEY_LSUIElement = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.yauhenin.timily; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_APPROACHABLE_CONCURRENCY = YES; SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_STRICT_CONCURRENCY = complete; SWIFT_VERSION = 6.0; }; name = Release; };
+		AA7000000000000000000005 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {BUNDLE_LOADER = "$(TEST_HOST)"; CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks", "@loader_path/../Frameworks",); MACOSX_DEPLOYMENT_TARGET = 14.0; PRODUCT_BUNDLE_IDENTIFIER = com.yauhenin.timily.tests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_APPROACHABLE_CONCURRENCY = YES; SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated; SWIFT_STRICT_CONCURRENCY = complete; SWIFT_VERSION = 6.0; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Timily.app/Contents/MacOS/Timily"; }; name = Debug; };
+		AA7000000000000000000006 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {BUNDLE_LOADER = "$(TEST_HOST)"; CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks", "@loader_path/../Frameworks",); MACOSX_DEPLOYMENT_TARGET = 14.0; PRODUCT_BUNDLE_IDENTIFIER = com.yauhenin.timily.tests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_APPROACHABLE_CONCURRENCY = YES; SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated; SWIFT_STRICT_CONCURRENCY = complete; SWIFT_VERSION = 6.0; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Timily.app/Contents/MacOS/Timily"; }; name = Release; };
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		AA8000000000000000000001 /* Build configuration list for PBXProject "Timily" */ = {isa = XCConfigurationList; buildConfigurations = (AA7000000000000000000001 /* Debug */, AA7000000000000000000002 /* Release */,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		AA8000000000000000000002 /* Build configuration list for PBXNativeTarget "Timily" */ = {isa = XCConfigurationList; buildConfigurations = (AA7000000000000000000003 /* Debug */, AA7000000000000000000004 /* Release */,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		AA8000000000000000000003 /* Build configuration list for PBXNativeTarget "TimilyTests" */ = {isa = XCConfigurationList; buildConfigurations = (AA7000000000000000000005 /* Debug */, AA7000000000000000000006 /* Release */,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+/* End XCConfigurationList section */
+	};
+	rootObject = AA6000000000000000000001 /* Project object */;
+}
