@@ -13,6 +13,8 @@ struct MainWindowView: View {
             .navigationSplitViewColumnWidth(min: 180, ideal: 220)
         } detail: {
             switch selection {
+            case .activity:
+                ActivityView()
             case .projects:
                 ProjectsView()
             case let destination?:

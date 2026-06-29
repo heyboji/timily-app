@@ -343,6 +343,131 @@ final class TimeEntryServiceTests: XCTestCase {
         XCTAssertFalse(entries.contains { $0.id == timerID })
     }
 
+    // MARK: update(_:)
+
+    @MainActor
+    func testUpdateChangesManualEntry() throws {
+        let context = try makeContext()
+        let project = Project(name: "Client", colorHex: "#5E5CE6")
+        context.insert(project)
+        let service = TimeEntryService()
+        let entry = try service.add(start: date(0), end: date(60), source: .manual, in: context)
+
+        try service.update(
+            entry,
+            start: date(10),
+            end: date(70),
+            description: "Planning",
+            project: project,
+            replacingConflicts: false,
+            in: context
+        )
+
+        XCTAssertEqual(entry.startDate, date(10))
+        XCTAssertEqual(entry.endDate, date(70))
+        XCTAssertEqual(entry.entryDescription, "Planning")
+        XCTAssertEqual(entry.project?.id, project.id)
+        XCTAssertNil(entry.matchedRule)
+    }
+
+    @MainActor
+    func testUpdateRejectsConflictWithoutChangingEntry() throws {
+        let context = try makeContext()
+        let service = TimeEntryService()
+        let entry = try service.add(start: date(0), end: date(60), source: .manual, in: context)
+        _ = try service.add(start: date(100), end: date(160), source: .manual, in: context)
+
+        XCTAssertThrowsError(
+            try service.update(
+                entry,
+                start: date(50),
+                end: date(120),
+                description: nil,
+                project: nil,
+                replacingConflicts: false,
+                in: context
+            )
+        ) { error in
+            XCTAssertEqual(error as? TimeEntryError, .overlapsExistingEntry)
+        }
+
+        XCTAssertEqual(entry.startDate, date(0))
+        XCTAssertEqual(entry.endDate, date(60))
+    }
+
+    @MainActor
+    func testUpdateReplacesConflictingEntry() throws {
+        let context = try makeContext()
+        let service = TimeEntryService()
+        let entry = try service.add(start: date(0), end: date(60), source: .manual, in: context)
+        _ = try service.add(start: date(100), end: date(160), source: .manual, in: context)
+
+        try service.update(
+            entry,
+            start: date(50),
+            end: date(120),
+            description: nil,
+            project: nil,
+            replacingConflicts: true,
+            in: context
+        )
+
+        let entries = try context.fetch(
+            FetchDescriptor<TimeEntry>(sortBy: [SortDescriptor(\.startDate)])
+        )
+        XCTAssertEqual(entries.count, 2)
+        XCTAssertEqual(entries[0].startDate, date(50))
+        XCTAssertEqual(entries[0].endDate, date(120))
+        XCTAssertEqual(entries[1].startDate, date(120))
+        XCTAssertEqual(entries[1].endDate, date(160))
+    }
+
+    // MARK: delete(_:)
+
+    @MainActor
+    func testDeleteRematerializesSegmentsAsUnassignedEntries() throws {
+        let context = try makeContext()
+        let project = Project(name: "Client", colorHex: "#5E5CE6")
+        let entry = TimeEntry(
+            startDate: date(0),
+            endDate: date(120),
+            source: .manual,
+            project: project
+        )
+        let firstSegment = ActivitySegment(
+            appBundleId: "com.figma.Desktop",
+            appName: "Figma",
+            startDate: date(0),
+            endDate: date(60),
+            timeEntry: entry
+        )
+        let secondSegment = ActivitySegment(
+            appBundleId: "com.apple.Safari",
+            appName: "Safari",
+            startDate: date(60),
+            endDate: date(120),
+            timeEntry: entry
+        )
+        context.insert(project)
+        context.insert(entry)
+        context.insert(firstSegment)
+        context.insert(secondSegment)
+        try context.save()
+        let deletedID = entry.id
+
+        try TimeEntryService().delete(entry, in: context)
+
+        let entries = try context.fetch(
+            FetchDescriptor<TimeEntry>(sortBy: [SortDescriptor(\.startDate)])
+        )
+        XCTAssertEqual(entries.count, 2)
+        XCTAssertFalse(entries.contains { $0.id == deletedID })
+        XCTAssertTrue(entries.allSatisfy { $0.source == .fromActivity })
+        XCTAssertTrue(entries.allSatisfy { $0.project == nil })
+        XCTAssertEqual(firstSegment.timeEntry?.id, entries[0].id)
+        XCTAssertEqual(secondSegment.timeEntry?.id, entries[1].id)
+    }
+
     // MARK: split(entry:at:)
 
     @MainActor

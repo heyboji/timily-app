@@ -76,6 +76,73 @@ struct TimeEntryService {
         }
     }
 
+    /// Updates an existing entry while preserving the non-overlap invariant.
+    ///
+    /// When `replacingConflicts` is `false`, overlapping entries cause
+    /// `TimeEntryError.overlapsExistingEntry`. When it is `true`, conflicting
+    /// entries are truncated, split, or deleted using the same rules as Replace.
+    func update(
+        _ entry: TimeEntry,
+        start: Date,
+        end: Date,
+        description: String?,
+        project: Project?,
+        replacingConflicts: Bool,
+        in context: ModelContext
+    ) throws {
+        let range = try TimeRange(start: start, end: end)
+        let conflicts = try overlapping(range: range, excluding: entry.id, in: context)
+        guard replacingConflicts || conflicts.isEmpty else {
+            throw TimeEntryError.overlapsExistingEntry
+        }
+
+        do {
+            if replacingConflicts {
+                for conflict in conflicts {
+                    try resolveConflict(existing: conflict, with: range, in: context)
+                }
+            }
+
+            entry.startDate = range.start
+            entry.endDate = range.end
+            entry.entryDescription = description
+            entry.project = project
+            entry.matchedRule = nil
+            try context.save()
+        } catch {
+            context.rollback()
+            throw error
+        }
+    }
+
+    /// Deletes an entry while preserving its raw activity segments.
+    ///
+    /// Each linked segment is materialized as a separate Unassigned entry so
+    /// its duration remains accounted for without keeping the deleted entry.
+    func delete(_ entry: TimeEntry, in context: ModelContext) throws {
+        let segments = entry.activitySegments
+
+        do {
+            context.delete(entry)
+
+            for segment in segments {
+                let replacement = TimeEntry(
+                    startDate: segment.startDate,
+                    endDate: segment.endDate,
+                    entryDescription: segment.note,
+                    source: .fromActivity
+                )
+                context.insert(replacement)
+                segment.timeEntry = replacement
+            }
+
+            try context.save()
+        } catch {
+            context.rollback()
+            throw error
+        }
+    }
+
     /// Splits `entry` at `boundary` into two consecutive entries.
     ///
     /// Both resulting entries inherit the description, source, and project of the
@@ -115,7 +182,11 @@ struct TimeEntryService {
     // MARK: - Private helpers
 
     /// Fetches entries whose intervals overlap `range` using half-open semantics.
-    private func overlapping(range: TimeRange, in context: ModelContext) throws -> [TimeEntry] {
+    private func overlapping(
+        range: TimeRange,
+        excluding excludedID: UUID? = nil,
+        in context: ModelContext
+    ) throws -> [TimeEntry] {
         guard range.start < range.end else { return [] }
 
         let rangeEnd = range.end
@@ -128,6 +199,7 @@ struct TimeEntryService {
         let candidates = try context.fetch(descriptor)
         let rangeStart = range.start
         return candidates.filter { entry in
+            guard entry.id != excludedID else { return false }
             // Half-open overlap: existing must end strictly after range.start.
             // A nil endDate means the timer is still running → always potentially overlapping.
             guard let end = entry.endDate else { return true }
