@@ -41,6 +41,8 @@
 		AA1000000000000000000032 /* TimeEntryRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000032 /* TimeEntryRowView.swift */; };
 		AA1000000000000000000033 /* ActivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000033 /* ActivityView.swift */; };
 		AA1000000000000000000034 /* ManualEntriesViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000034 /* ManualEntriesViewModelTests.swift */; };
+		AA1000000000000000000035 /* RuleEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000035 /* RuleEngine.swift */; };
+		AA1000000000000000000036 /* RuleEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000036 /* RuleEngineTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -90,6 +92,8 @@
 		AA2100000000000000000032 /* TimeEntryRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeEntryRowView.swift; sourceTree = "<group>"; };
 		AA2100000000000000000033 /* ActivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityView.swift; sourceTree = "<group>"; };
 		AA2100000000000000000034 /* ManualEntriesViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManualEntriesViewModelTests.swift; sourceTree = "<group>"; };
+		AA2100000000000000000035 /* RuleEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuleEngine.swift; sourceTree = "<group>"; };
+		AA2100000000000000000036 /* RuleEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuleEngineTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -155,6 +159,7 @@
 				AA2100000000000000000023 /* IdleDetector.swift */,
 				AA2100000000000000000024 /* BackupArchive.swift */,
 				AA2100000000000000000025 /* BackupService.swift */,
+				AA2100000000000000000035 /* RuleEngine.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -219,6 +224,7 @@
 				AA2100000000000000000027 /* IdleDetectorTests.swift */,
 				AA2100000000000000000028 /* BackupServiceTests.swift */,
 				AA2100000000000000000034 /* ManualEntriesViewModelTests.swift */,
+				AA2100000000000000000036 /* RuleEngineTests.swift */,
 			);
 			path = TimilyTests;
 			sourceTree = "<group>";
@@ -338,6 +344,7 @@
 				AA1000000000000000000031 /* ManualEntryEditorView.swift in Sources */,
 				AA1000000000000000000032 /* TimeEntryRowView.swift in Sources */,
 				AA1000000000000000000033 /* ActivityView.swift in Sources */,
+				AA1000000000000000000035 /* RuleEngine.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -351,6 +358,7 @@
 				AA1000000000000000000027 /* IdleDetectorTests.swift in Sources */,
 				AA1000000000000000000028 /* BackupServiceTests.swift in Sources */,
 				AA1000000000000000000034 /* ManualEntriesViewModelTests.swift in Sources */,
+				AA1000000000000000000036 /* RuleEngineTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
