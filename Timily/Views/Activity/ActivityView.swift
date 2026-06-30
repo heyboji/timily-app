@@ -23,7 +23,7 @@ struct ActivityView: View {
             activityToolbar
         }
         .safeAreaInset(edge: .bottom) {
-            if !timelineViewModel.selectedEntryIDs.isEmpty {
+            if !timelineViewModel.selection.isEmpty {
                 selectionBar
             }
         }
@@ -50,8 +50,11 @@ struct ActivityView: View {
         } message: {
             Text(timelineViewModel.errorMessage)
         }
-        .onChange(of: dayEntries.map(\.id)) {
+        .onChange(of: selectionSnapshot) {
             timelineViewModel.pruneSelection(to: dayEntries)
+        }
+        .onChange(of: timelineViewModel.selection) { previous, proposed in
+            timelineViewModel.normalizeSelection(from: previous, to: proposed)
         }
     }
 
@@ -81,11 +84,30 @@ struct ActivityView: View {
     private var entryList: some View {
         @Bindable var timelineViewModel = timelineViewModel
 
-        return List(selection: $timelineViewModel.selectedEntryIDs) {
+        return List(selection: $timelineViewModel.selection) {
             ForEach(dayEntries) { entry in
-                entryRow(for: entry)
-                    .tag(entry.id)
+                entryGroup(for: entry)
             }
+        }
+    }
+
+    @ViewBuilder
+    private func entryGroup(for entry: TimeEntry) -> some View {
+        let segments = timelineViewModel.segmentsForSelectedDay(in: entry)
+
+        if segments.isEmpty {
+            entryRow(for: entry)
+                .tag(ActivityTimelineSelection.entry(entry.id))
+        } else {
+            DisclosureGroup {
+                ForEach(segments) { segment in
+                    segmentRow(for: segment)
+                        .tag(ActivityTimelineSelection.segment(segment.id))
+                }
+            } label: {
+                entryRow(for: entry)
+            }
+            .tag(ActivityTimelineSelection.entry(entry.id))
         }
     }
 
@@ -97,6 +119,16 @@ struct ActivityView: View {
                 displayInterval: displayInterval,
                 onEdit: { viewModel.presentEditor(for: entry) },
                 onDelete: { viewModel.delete(entry, in: modelContext) }
+            )
+        }
+    }
+
+    @ViewBuilder
+    private func segmentRow(for segment: ActivitySegment) -> some View {
+        if let displayInterval = timelineViewModel.displayInterval(for: segment) {
+            ActivitySegmentRowView(
+                segment: segment,
+                displayInterval: displayInterval
             )
         }
     }
@@ -142,16 +174,25 @@ struct ActivityView: View {
         )
     }
 
+    private var selectionSnapshot: [ActivityTimelineSelection] {
+        dayEntries.flatMap { entry in
+            [ActivityTimelineSelection.entry(entry.id)]
+                + timelineViewModel.segmentsForSelectedDay(in: entry).map {
+                    ActivityTimelineSelection.segment($0.id)
+                }
+        }
+    }
+
     private var selectionBar: some View {
         HStack(spacing: 12) {
-            Text("\(timelineViewModel.selectedEntryIDs.count) selected")
+            Text(selectionSummary)
                 .foregroundStyle(.secondary)
 
             Spacer()
 
             Menu("Assign Project", systemImage: "folder") {
                 Button("Unassigned") {
-                    timelineViewModel.assignSelected(from: dayEntries, to: nil, in: modelContext)
+                    assign(to: nil)
                 }
 
                 if !activeProjects.isEmpty {
@@ -160,23 +201,38 @@ struct ActivityView: View {
 
                 ForEach(activeProjects) { project in
                     Button(project.name) {
-                        timelineViewModel.assignSelected(
-                            from: dayEntries,
-                            to: project,
-                            in: modelContext
-                        )
+                        assign(to: project)
                     }
                 }
             }
 
-            Button("Merge", systemImage: "arrow.triangle.merge") {
-                timelineViewModel.mergeSelected(from: dayEntries, in: modelContext)
+            if timelineViewModel.selectedSegmentIDs.isEmpty {
+                Button("Merge", systemImage: "arrow.triangle.merge") {
+                    timelineViewModel.mergeSelected(from: dayEntries, in: modelContext)
+                }
+                .disabled(timelineViewModel.selectedEntryIDs.count < 2)
             }
-            .disabled(timelineViewModel.selectedEntryIDs.count < 2)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .background(.bar)
+    }
+
+    private var selectionSummary: String {
+        let segmentCount = timelineViewModel.selectedSegmentIDs.count
+        if segmentCount > 0 {
+            return "\(segmentCount) \(segmentCount == 1 ? "segment" : "segments") selected"
+        }
+        let entryCount = timelineViewModel.selectedEntryIDs.count
+        return "\(entryCount) \(entryCount == 1 ? "entry" : "entries") selected"
+    }
+
+    private func assign(to project: Project?) {
+        if timelineViewModel.selectedSegmentIDs.isEmpty {
+            timelineViewModel.assignSelected(from: dayEntries, to: project, in: modelContext)
+        } else {
+            timelineViewModel.assignSelectedSegments(to: project, in: modelContext)
+        }
     }
 
     private func presentNewEntry() {
