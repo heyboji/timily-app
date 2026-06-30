@@ -25,6 +25,14 @@ struct TimeEntryEditorState: Identifiable {
         }
     }
 
+    init(startDate: Date, endDate: Date) {
+        self.entry = nil
+        self.startDate = startDate
+        self.endDate = endDate
+        self.projectID = nil
+        self.entryDescription = ""
+    }
+
     var title: String {
         entry == nil ? "New Entry" : "Edit Entry"
     }

@@ -15,6 +15,20 @@ final class ManualEntriesViewModelTests: XCTestCase {
     }
 
     @MainActor
+    func testSelectedRangePrefillsNewEntry() throws {
+        let start = Date(timeIntervalSince1970: 1_800)
+        let end = Date(timeIntervalSince1970: 3_600)
+        let viewModel = ManualEntriesViewModel()
+
+        viewModel.presentNewEntry(startDate: start, endDate: end)
+
+        let state = try XCTUnwrap(viewModel.editorState)
+        XCTAssertNil(state.entry)
+        XCTAssertEqual(state.startDate, start)
+        XCTAssertEqual(state.endDate, end)
+    }
+
+    @MainActor
     func testCreateAndEditManualEntry() throws {
         let container = try PersistenceController.makeContainer(inMemory: true)
         let context = container.mainContext

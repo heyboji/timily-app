@@ -62,6 +62,7 @@
 		AA1000000000000000000053 /* ActivityTimelineViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000053 /* ActivityTimelineViewModelTests.swift */; };
 		AA1000000000000000000054 /* ActivitySegmentReconciler.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000054 /* ActivitySegmentReconciler.swift */; };
 		AA1000000000000000000055 /* ActivitySegmentRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000055 /* ActivitySegmentRowView.swift */; };
+		AA1000000000000000000056 /* ActivityDayRulerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000056 /* ActivityDayRulerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -132,6 +133,7 @@
 		AA2100000000000000000053 /* ActivityTimelineViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityTimelineViewModelTests.swift; sourceTree = "<group>"; };
 		AA2100000000000000000054 /* ActivitySegmentReconciler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivitySegmentReconciler.swift; sourceTree = "<group>"; };
 		AA2100000000000000000055 /* ActivitySegmentRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivitySegmentRowView.swift; sourceTree = "<group>"; };
+		AA2100000000000000000056 /* ActivityDayRulerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityDayRulerView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -245,6 +247,7 @@
 				AA2100000000000000000031 /* ManualEntryEditorView.swift */,
 				AA2100000000000000000030 /* TimeEntryEditorState.swift */,
 				AA2100000000000000000055 /* ActivitySegmentRowView.swift */,
+				AA2100000000000000000056 /* ActivityDayRulerView.swift */,
 			);
 			path = Activity;
 			sourceTree = "<group>";
@@ -414,6 +417,7 @@
 				AA1000000000000000000052 /* ActivityTimelineViewModel.swift in Sources */,
 				AA1000000000000000000054 /* ActivitySegmentReconciler.swift in Sources */,
 				AA1000000000000000000055 /* ActivitySegmentRowView.swift in Sources */,
+				AA1000000000000000000056 /* ActivityDayRulerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

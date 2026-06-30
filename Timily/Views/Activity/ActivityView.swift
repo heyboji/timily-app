@@ -74,10 +74,22 @@ struct ActivityView: View {
 
     @ViewBuilder
     private var dayContent: some View {
-        if dayEntries.isEmpty {
-            emptyState
-        } else {
-            entryList
+        VStack(spacing: 0) {
+            ActivityDayRulerView(
+                dayInterval: timelineViewModel.dayInterval,
+                blocks: rulerBlocks,
+                onSelectRange: presentSelectedRange
+            )
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+
+            Divider()
+
+            if dayEntries.isEmpty {
+                emptyState
+            } else {
+                entryList
+            }
         }
     }
 
@@ -89,6 +101,7 @@ struct ActivityView: View {
         } actions: {
             Button("New Entry", systemImage: "plus", action: presentNewEntry)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var entryList: some View {
@@ -147,6 +160,16 @@ struct ActivityView: View {
 
     private var activeProjects: [Project] {
         projects.filter { !$0.isArchived }
+    }
+
+    private var rulerBlocks: [ActivityDayRulerBlock] {
+        dayEntries.compactMap { entry in
+            guard let interval = timelineViewModel.displayInterval(for: entry) else {
+                return nil
+            }
+            let color = entry.project.map { Color(projectHex: $0.colorHex) } ?? .secondary
+            return ActivityDayRulerBlock(id: entry.id, interval: interval, color: color)
+        }
     }
 
     @ToolbarContentBuilder
@@ -275,5 +298,9 @@ struct ActivityView: View {
             : Calendar.current.date(byAdding: .hour, value: 12, to: timelineViewModel.selectedDay)
                 ?? timelineViewModel.selectedDay
         viewModel.presentNewEntry(now: anchor)
+    }
+
+    private func presentSelectedRange(startDate: Date, endDate: Date) {
+        viewModel.presentNewEntry(startDate: startDate, endDate: endDate)
     }
 }

@@ -285,6 +285,44 @@ final class ActivityTimelineViewModelTests: XCTestCase {
         XCTAssertEqual(try context.fetchCount(FetchDescriptor<ActivitySegment>()), 1)
     }
 
+    func testDayRulerRangeSnapsToMinutesAndSupportsReverseDrag() {
+        let calendar = utcCalendar()
+        let day = calendar.dateInterval(
+            of: .day,
+            for: date(2026, 6, 30, 12, calendar: calendar)
+        )!
+
+        let range = ActivityDayRulerMath.selectedRange(
+            from: 75.5,
+            to: 25.5,
+            width: 100,
+            dayInterval: day,
+            calendar: calendar
+        )
+
+        XCTAssertEqual(range?.start, date(2026, 6, 30, 6, 7, calendar: calendar))
+        XCTAssertEqual(range?.end, date(2026, 6, 30, 18, 7, calendar: calendar))
+    }
+
+    func testDayRulerUsesActualDSTDayDuration() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try XCTUnwrap(TimeZone(identifier: "America/New_York"))
+        let day = try XCTUnwrap(calendar.dateInterval(
+            of: .day,
+            for: date(2026, 3, 8, 12, calendar: calendar)
+        ))
+
+        let end = ActivityDayRulerMath.snappedDate(
+            at: 100,
+            width: 100,
+            dayInterval: day,
+            calendar: calendar
+        )
+
+        XCTAssertEqual(day.duration, 23 * 60 * 60)
+        XCTAssertEqual(end, day.end)
+    }
+
     private func utcCalendar() -> Calendar {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(secondsFromGMT: 0)!

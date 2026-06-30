@@ -21,6 +21,10 @@ final class ManualEntriesViewModel {
         editorState = TimeEntryEditorState(now: now)
     }
 
+    func presentNewEntry(startDate: Date, endDate: Date) {
+        editorState = TimeEntryEditorState(startDate: startDate, endDate: endDate)
+    }
+
     func presentEditor(for entry: TimeEntry) {
         editorState = TimeEntryEditorState(entry: entry)
     }
