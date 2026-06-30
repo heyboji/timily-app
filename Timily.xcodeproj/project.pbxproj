@@ -47,6 +47,9 @@
 		AA1000000000000000000038 /* TimerServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000038 /* TimerServiceTests.swift */; };
 		AA1000000000000000000039 /* Aggregator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000039 /* Aggregator.swift */; };
 		AA1000000000000000000040 /* AggregatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000040 /* AggregatorTests.swift */; };
+		AA1000000000000000000041 /* TimerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000041 /* TimerViewModel.swift */; };
+		AA1000000000000000000042 /* TimerControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000042 /* TimerControlView.swift */; };
+		AA1000000000000000000043 /* TimerViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000043 /* TimerViewModelTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -102,6 +105,9 @@
 		AA2100000000000000000038 /* TimerServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerServiceTests.swift; sourceTree = "<group>"; };
 		AA2100000000000000000039 /* Aggregator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Aggregator.swift; sourceTree = "<group>"; };
 		AA2100000000000000000040 /* AggregatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AggregatorTests.swift; sourceTree = "<group>"; };
+		AA2100000000000000000041 /* TimerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerViewModel.swift; sourceTree = "<group>"; };
+		AA2100000000000000000042 /* TimerControlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerControlView.swift; sourceTree = "<group>"; };
+		AA2100000000000000000043 /* TimerViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerViewModelTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -179,6 +185,7 @@
 			children = (
 				AA2100000000000000000013 /* ProjectsViewModel.swift */,
 				AA2100000000000000000029 /* ManualEntriesViewModel.swift */,
+				AA2100000000000000000041 /* TimerViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -193,6 +200,7 @@
 				AA3000000000000000000009 /* Activity */,
 				AA3000000000000000000010 /* Projects */,
 				AA3000000000000000000011 /* Settings */,
+				AA3000000000000000000017 /* Timer */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -223,6 +231,7 @@
 			sourceTree = "<group>";
 		};
 		AA3000000000000000000011 /* Settings */ = {isa = PBXGroup; children = (); path = Settings; sourceTree = "<group>"; };
+		AA3000000000000000000017 /* Timer */ = {isa = PBXGroup; children = (AA2100000000000000000042 /* TimerControlView.swift */,); path = Timer; sourceTree = "<group>"; };
 		AA3000000000000000000013 /* Utilities */ = {isa = PBXGroup; children = (AA2100000000000000000016 /* Color+ProjectHex.swift */,); path = Utilities; sourceTree = "<group>"; };
 		AA3000000000000000000014 /* Resources */ = {isa = PBXGroup; children = (); path = Resources; sourceTree = "<group>"; };
 		AA3000000000000000000015 /* TimilyTests */ = {
@@ -237,6 +246,7 @@
 				AA2100000000000000000036 /* RuleEngineTests.swift */,
 				AA2100000000000000000038 /* TimerServiceTests.swift */,
 				AA2100000000000000000040 /* AggregatorTests.swift */,
+				AA2100000000000000000043 /* TimerViewModelTests.swift */,
 			);
 			path = TimilyTests;
 			sourceTree = "<group>";
@@ -359,6 +369,8 @@
 				AA1000000000000000000035 /* RuleEngine.swift in Sources */,
 				AA1000000000000000000037 /* TimerService.swift in Sources */,
 				AA1000000000000000000039 /* Aggregator.swift in Sources */,
+				AA1000000000000000000041 /* TimerViewModel.swift in Sources */,
+				AA1000000000000000000042 /* TimerControlView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -375,6 +387,7 @@
 				AA1000000000000000000036 /* RuleEngineTests.swift in Sources */,
 				AA1000000000000000000038 /* TimerServiceTests.swift in Sources */,
 				AA1000000000000000000040 /* AggregatorTests.swift in Sources */,
+				AA1000000000000000000043 /* TimerViewModelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

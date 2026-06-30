@@ -4,9 +4,7 @@ struct MenuBarContentView: View {
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
-        Button("Start") {
-            // Timer behavior is implemented in S1.4.
-        }
+        TimerControlView(layout: .compact)
 
         Divider()
 

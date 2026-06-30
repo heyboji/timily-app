@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 struct MainWindowView: View {
@@ -13,6 +14,9 @@ struct MainWindowView: View {
             .navigationSplitViewColumnWidth(min: 180, ideal: 220)
         } detail: {
             switch selection {
+            case .dashboard:
+                TimerControlView(layout: .normal)
+                    .navigationTitle("Dashboard")
             case .activity:
                 ActivityView()
             case .projects:
@@ -32,4 +36,15 @@ struct MainWindowView: View {
 
 #Preview {
     MainWindowView()
+        .environment(TimerViewModel())
+        .modelContainer(
+            for: [
+                Project.self,
+                TimeEntry.self,
+                ActivitySegment.self,
+                AssignmentRule.self,
+                AppSettings.self,
+            ],
+            inMemory: true
+        )
 }
