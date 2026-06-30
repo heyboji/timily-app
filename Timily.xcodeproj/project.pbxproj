@@ -45,6 +45,8 @@
 		AA1000000000000000000036 /* RuleEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000036 /* RuleEngineTests.swift */; };
 		AA1000000000000000000037 /* TimerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000037 /* TimerService.swift */; };
 		AA1000000000000000000038 /* TimerServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000038 /* TimerServiceTests.swift */; };
+		AA1000000000000000000039 /* Aggregator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000039 /* Aggregator.swift */; };
+		AA1000000000000000000040 /* AggregatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000040 /* AggregatorTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -98,6 +100,8 @@
 		AA2100000000000000000036 /* RuleEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuleEngineTests.swift; sourceTree = "<group>"; };
 		AA2100000000000000000037 /* TimerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerService.swift; sourceTree = "<group>"; };
 		AA2100000000000000000038 /* TimerServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerServiceTests.swift; sourceTree = "<group>"; };
+		AA2100000000000000000039 /* Aggregator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Aggregator.swift; sourceTree = "<group>"; };
+		AA2100000000000000000040 /* AggregatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AggregatorTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -165,6 +169,7 @@
 				AA2100000000000000000025 /* BackupService.swift */,
 				AA2100000000000000000035 /* RuleEngine.swift */,
 				AA2100000000000000000037 /* TimerService.swift */,
+				AA2100000000000000000039 /* Aggregator.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -231,6 +236,7 @@
 				AA2100000000000000000034 /* ManualEntriesViewModelTests.swift */,
 				AA2100000000000000000036 /* RuleEngineTests.swift */,
 				AA2100000000000000000038 /* TimerServiceTests.swift */,
+				AA2100000000000000000040 /* AggregatorTests.swift */,
 			);
 			path = TimilyTests;
 			sourceTree = "<group>";
@@ -352,6 +358,7 @@
 				AA1000000000000000000033 /* ActivityView.swift in Sources */,
 				AA1000000000000000000035 /* RuleEngine.swift in Sources */,
 				AA1000000000000000000037 /* TimerService.swift in Sources */,
+				AA1000000000000000000039 /* Aggregator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -367,6 +374,7 @@
 				AA1000000000000000000034 /* ManualEntriesViewModelTests.swift in Sources */,
 				AA1000000000000000000036 /* RuleEngineTests.swift in Sources */,
 				AA1000000000000000000038 /* TimerServiceTests.swift in Sources */,
+				AA1000000000000000000040 /* AggregatorTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
