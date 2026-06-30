@@ -5,18 +5,39 @@ import SwiftUI
 struct TimilyApp: App {
     private let modelContainer: ModelContainer
     private let timerViewModel: TimerViewModel
+    private let activityMonitor: ActivityMonitor
 
     init() {
         do {
             let container = try PersistenceController.makeContainer()
-            try PersistenceController.bootstrapSettings(in: container.mainContext)
+            let settings = try PersistenceController.bootstrapSettings(in: container.mainContext)
             _ = try TimerService().recover(in: container.mainContext)
 
             let timerViewModel = TimerViewModel()
             timerViewModel.refresh(in: container.mainContext)
 
+            let activityMonitor = ActivityMonitor(
+                settings: settings,
+                idleDetector: IdleDetector(
+                    source: SystemIdleTimeSource(),
+                    threshold: TimeInterval(settings.idleThresholdSeconds)
+                ),
+                workspaceSource: SystemActivityWorkspaceSource(),
+                segmentSink: SwiftDataActivitySegmentSink(context: container.mainContext),
+                saveSettings: {
+                    do {
+                        try container.mainContext.save()
+                    } catch {
+                        container.mainContext.rollback()
+                        throw error
+                    }
+                }
+            )
+            activityMonitor.start()
+
             modelContainer = container
             self.timerViewModel = timerViewModel
+            self.activityMonitor = activityMonitor
         } catch {
             fatalError("Failed to initialize SwiftData: \(error)")
         }
@@ -26,6 +47,7 @@ struct TimilyApp: App {
         MenuBarExtra {
             MenuBarContentView()
                 .environment(timerViewModel)
+                .environment(activityMonitor)
         } label: {
             TimerMenuBarLabel(viewModel: timerViewModel)
         }
