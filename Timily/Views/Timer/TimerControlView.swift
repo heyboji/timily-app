@@ -6,13 +6,10 @@ struct TimerMenuBarLabel: View {
     let viewModel: TimerViewModel
 
     var body: some View {
-        if let timer = viewModel.activeTimer {
-            TimelineView(.periodic(from: .now, by: 1)) { timeline in
-                Label(
-                    "Timily \(formattedElapsedTime(for: timer, at: timeline.date))",
-                    systemImage: "clock"
-                )
-            }
+        if viewModel.activeTimer != nil {
+            // Keep MenuBarExtra labels static. Periodic label updates trigger an
+            // AppKit status-item image update loop and unbounded memory growth.
+            Label("Timily — Running", systemImage: "clock.fill")
         } else {
             Label("Timily", systemImage: "clock")
         }
