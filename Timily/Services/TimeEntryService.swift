@@ -43,6 +43,7 @@ struct TimeEntryService {
     ///   - Existing entry **fully encloses** the new range → split into two pieces.
     ///   - Running timer (`endDate == nil`) that **starts inside** the new range → deleted;
     ///     if it starts before the new range it is truncated at `start`.
+    ///   - Linked activity is split and reassigned to the resulting entries.
     ///
     /// - Throws: `TimeEntryError.endBeforeStart` when `end < start`.
     /// - Returns: The newly inserted `TimeEntry`.
@@ -57,9 +58,18 @@ struct TimeEntryService {
     ) throws -> TimeEntry {
         let range = try TimeRange(start: start, end: end)
         let conflicts = try overlapping(range: range, in: context)
+        let reconciler = ActivitySegmentReconciler()
+        let affectedSegments = try reconciler.snapshot(ownedBy: conflicts, in: context)
         do {
+            var finalEntries: [TimeEntry] = []
             for existing in conflicts {
-                try resolveConflict(existing: existing, with: range, in: context)
+                finalEntries.append(
+                    contentsOf: try resolveConflict(
+                        existing: existing,
+                        with: range,
+                        in: context
+                    )
+                )
             }
             let entry = makeEntry(
                 range: range,
@@ -68,6 +78,13 @@ struct TimeEntryService {
                 project: project
             )
             context.insert(entry)
+            finalEntries.append(entry)
+            try reconciler.redistribute(
+                affectedSegments,
+                among: finalEntries,
+                unownedPolicy: .materializeUnassigned,
+                in: context
+            )
             try context.save()
             return entry
         } catch {
@@ -81,6 +98,7 @@ struct TimeEntryService {
     /// When `replacingConflicts` is `false`, overlapping entries cause
     /// `TimeEntryError.overlapsExistingEntry`. When it is `true`, conflicting
     /// entries are truncated, split, or deleted using the same rules as Replace.
+    /// Activity outside the updated range is preserved as separate Unassigned entries.
     func update(
         _ entry: TimeEntry,
         start: Date,
@@ -95,11 +113,23 @@ struct TimeEntryService {
         guard replacingConflicts || conflicts.isEmpty else {
             throw TimeEntryError.overlapsExistingEntry
         }
+        let reconciler = ActivitySegmentReconciler()
+        let affectedSegments = try reconciler.snapshot(
+            ownedBy: [entry] + conflicts,
+            in: context
+        )
 
         do {
+            var finalEntries: [TimeEntry] = []
             if replacingConflicts {
                 for conflict in conflicts {
-                    try resolveConflict(existing: conflict, with: range, in: context)
+                    finalEntries.append(
+                        contentsOf: try resolveConflict(
+                            existing: conflict,
+                            with: range,
+                            in: context
+                        )
+                    )
                 }
             }
 
@@ -108,6 +138,13 @@ struct TimeEntryService {
             entry.entryDescription = description
             entry.project = project
             entry.matchedRule = nil
+            finalEntries.append(entry)
+            try reconciler.redistribute(
+                affectedSegments,
+                among: finalEntries,
+                unownedPolicy: .materializeUnassigned,
+                in: context
+            )
             try context.save()
         } catch {
             context.rollback()
@@ -146,7 +183,8 @@ struct TimeEntryService {
     /// Splits `entry` at `boundary` into two consecutive entries.
     ///
     /// Both resulting entries inherit the description, source, and project of the
-    /// original. The original entry is deleted from the context.
+    /// original. Linked activity is split at the same boundary and reassigned.
+    /// The original entry is deleted from the context.
     ///
     /// - Throws: `TimeEntryError.splitPointOutsideEntry` when `boundary` is not
     ///   strictly inside the entry's `(startDate, endDate)` range, or when the
@@ -164,6 +202,8 @@ struct TimeEntryService {
         }
         let range = try TimeRange(start: entry.startDate, end: endDate)
         let (leftRange, rightRange) = try range.split(at: boundary)
+        let reconciler = ActivitySegmentReconciler()
+        let affectedSegments = try reconciler.snapshot(ownedBy: [entry], in: context)
 
         do {
             let left = copy(entry, with: leftRange)
@@ -171,6 +211,12 @@ struct TimeEntryService {
             context.delete(entry)
             context.insert(left)
             context.insert(right)
+            try reconciler.redistribute(
+                affectedSegments,
+                among: [left, right],
+                unownedPolicy: .throwError,
+                in: context
+            )
             try context.save()
             return (left, right)
         } catch {

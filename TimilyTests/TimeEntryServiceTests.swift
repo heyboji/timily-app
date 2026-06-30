@@ -589,6 +589,230 @@ final class TimeEntryServiceTests: XCTestCase {
         XCTAssertEqual(right.createdAt, createdAt)
     }
 
+    @MainActor
+    func testSplitRepartitionsCrossingActivitySegmentAndPreservesMetadata() throws {
+        let context = try makeContext()
+        let service = TimeEntryService()
+        let entry = try service.add(
+            start: date(0),
+            end: date(100),
+            source: .fromActivity,
+            in: context
+        )
+        let segment = ActivitySegment(
+            appBundleId: "com.figma.Desktop",
+            appName: "Figma",
+            windowTitle: "Timeline",
+            documentPath: "/Users/test/Timeline.fig",
+            url: "https://figma.com/file/timeline",
+            startDate: date(20),
+            endDate: date(80),
+            timeEntry: entry,
+            note: "Design"
+        )
+        context.insert(segment)
+        try context.save()
+
+        let (left, right) = try service.split(entry: entry, at: date(50), in: context)
+
+        let segments = try context.fetch(
+            FetchDescriptor<ActivitySegment>(sortBy: [SortDescriptor(\.startDate)])
+        )
+        XCTAssertEqual(segments.count, 2)
+        guard segments.count == 2 else { return }
+
+        XCTAssertEqual(segments[0].startDate, date(20))
+        XCTAssertEqual(segments[0].endDate, date(50))
+        XCTAssertEqual(segments[0].timeEntry?.id, left.id)
+        XCTAssertEqual(segments[1].startDate, date(50))
+        XCTAssertEqual(segments[1].endDate, date(80))
+        XCTAssertEqual(segments[1].timeEntry?.id, right.id)
+
+        for piece in segments {
+            XCTAssertEqual(piece.appBundleId, "com.figma.Desktop")
+            XCTAssertEqual(piece.appName, "Figma")
+            XCTAssertEqual(piece.windowTitle, "Timeline")
+            XCTAssertEqual(piece.documentPath, "/Users/test/Timeline.fig")
+            XCTAssertEqual(piece.url, "https://figma.com/file/timeline")
+            XCTAssertEqual(piece.note, "Design")
+        }
+    }
+
+    @MainActor
+    func testReplaceRepartitionsActivityWithoutOrphansOrOutOfBoundsSegments() throws {
+        let context = try makeContext()
+        let service = TimeEntryService()
+        let activityEntry = try service.add(
+            start: date(0),
+            end: date(100),
+            source: .fromActivity,
+            in: context
+        )
+        let segment = ActivitySegment(
+            appBundleId: "com.apple.Safari",
+            appName: "Safari",
+            windowTitle: "Research",
+            documentPath: "/Users/test/Research.md",
+            url: "https://example.com/research",
+            startDate: date(10),
+            endDate: date(90),
+            timeEntry: activityEntry,
+            note: "Reading"
+        )
+        context.insert(segment)
+        try context.save()
+
+        _ = try service.replace(
+            start: date(30),
+            end: date(70),
+            source: .manual,
+            in: context
+        )
+
+        let segments = try context.fetch(
+            FetchDescriptor<ActivitySegment>(sortBy: [SortDescriptor(\.startDate)])
+        )
+        XCTAssertEqual(segments.count, 3)
+        guard segments.count == 3 else { return }
+
+        let expectedRanges = [(10.0, 30.0), (30.0, 70.0), (70.0, 90.0)]
+        for (piece, expectedRange) in zip(segments, expectedRanges) {
+            XCTAssertEqual(piece.startDate, date(expectedRange.0))
+            XCTAssertEqual(piece.endDate, date(expectedRange.1))
+            XCTAssertEqual(piece.appBundleId, "com.apple.Safari")
+            XCTAssertEqual(piece.appName, "Safari")
+            XCTAssertEqual(piece.windowTitle, "Research")
+            XCTAssertEqual(piece.documentPath, "/Users/test/Research.md")
+            XCTAssertEqual(piece.url, "https://example.com/research")
+            XCTAssertEqual(piece.note, "Reading")
+
+            guard let owner = piece.timeEntry else {
+                XCTFail("Every activity segment must have an owner")
+                continue
+            }
+            XCTAssertLessThanOrEqual(owner.startDate, piece.startDate)
+            guard let ownerEnd = owner.endDate else {
+                XCTFail("A completed activity segment must not belong to an open entry")
+                continue
+            }
+            XCTAssertLessThanOrEqual(piece.endDate, ownerEnd)
+        }
+    }
+
+    @MainActor
+    func testReplacePreservesActivityBeyondClosedRunningTimer() throws {
+        let context = try makeContext()
+        let timer = TimeEntry(startDate: date(0), source: .timer)
+        let segment = ActivitySegment(
+            appBundleId: "com.example.app",
+            appName: "Example",
+            startDate: date(10),
+            endDate: date(90),
+            timeEntry: timer
+        )
+        context.insert(timer)
+        context.insert(segment)
+        try context.save()
+
+        _ = try TimeEntryService().replace(
+            start: date(20),
+            end: date(40),
+            source: .manual,
+            in: context
+        )
+
+        let entries = try context.fetch(
+            FetchDescriptor<TimeEntry>(sortBy: [SortDescriptor(\.startDate)])
+        )
+        let segments = try context.fetch(
+            FetchDescriptor<ActivitySegment>(sortBy: [SortDescriptor(\.startDate)])
+        )
+        XCTAssertEqual(entries.map(\.startDate), [date(0), date(20), date(40)])
+        XCTAssertEqual(entries.map(\.endDate), [date(20), date(40), date(90)])
+        XCTAssertEqual(entries[2].source, .fromActivity)
+        XCTAssertNil(entries[2].project)
+        XCTAssertEqual(segments.map(\.startDate), [date(10), date(20), date(40)])
+        XCTAssertEqual(segments.map(\.endDate), [date(20), date(40), date(90)])
+        XCTAssertEqual(segments.map { $0.timeEntry?.id }, entries.map(\.id))
+    }
+
+    @MainActor
+    func testUpdateShrinkingEntryRematerializesUncoveredActivityAsUnassignedEntries() throws {
+        let context = try makeContext()
+        let project = Project(name: "Client", colorHex: "#5E5CE6")
+        context.insert(project)
+        let service = TimeEntryService()
+        let entry = try service.add(
+            start: date(0),
+            end: date(100),
+            source: .manual,
+            project: project,
+            in: context
+        )
+        let segment = ActivitySegment(
+            appBundleId: "com.apple.dt.Xcode",
+            appName: "Xcode",
+            windowTitle: "TimeEntryService.swift",
+            documentPath: "/Users/test/TimeEntryService.swift",
+            url: "https://github.com/example/timily",
+            startDate: date(0),
+            endDate: date(100),
+            timeEntry: entry,
+            note: "Implementation"
+        )
+        context.insert(segment)
+        try context.save()
+
+        try service.update(
+            entry,
+            start: date(20),
+            end: date(80),
+            description: nil,
+            project: project,
+            replacingConflicts: false,
+            in: context
+        )
+
+        let entries = try context.fetch(
+            FetchDescriptor<TimeEntry>(sortBy: [SortDescriptor(\.startDate)])
+        )
+        XCTAssertEqual(entries.count, 3)
+        guard entries.count == 3 else { return }
+
+        XCTAssertEqual(entries[0].startDate, date(0))
+        XCTAssertEqual(entries[0].endDate, date(20))
+        XCTAssertEqual(entries[0].source, .fromActivity)
+        XCTAssertNil(entries[0].project)
+        XCTAssertEqual(entries[1].id, entry.id)
+        XCTAssertEqual(entries[1].startDate, date(20))
+        XCTAssertEqual(entries[1].endDate, date(80))
+        XCTAssertEqual(entries[1].project?.id, project.id)
+        XCTAssertEqual(entries[2].startDate, date(80))
+        XCTAssertEqual(entries[2].endDate, date(100))
+        XCTAssertEqual(entries[2].source, .fromActivity)
+        XCTAssertNil(entries[2].project)
+
+        let segments = try context.fetch(
+            FetchDescriptor<ActivitySegment>(sortBy: [SortDescriptor(\.startDate)])
+        )
+        XCTAssertEqual(segments.count, 3)
+        guard segments.count == 3 else { return }
+
+        let expectedRanges = [(0.0, 20.0), (20.0, 80.0), (80.0, 100.0)]
+        for (index, pair) in zip(segments.indices, zip(segments, expectedRanges)) {
+            let (piece, expectedRange) = pair
+            XCTAssertEqual(piece.startDate, date(expectedRange.0))
+            XCTAssertEqual(piece.endDate, date(expectedRange.1))
+            XCTAssertEqual(piece.timeEntry?.id, entries[index].id)
+            XCTAssertEqual(piece.appBundleId, "com.apple.dt.Xcode")
+            XCTAssertEqual(piece.appName, "Xcode")
+            XCTAssertEqual(piece.windowTitle, "TimeEntryService.swift")
+            XCTAssertEqual(piece.documentPath, "/Users/test/TimeEntryService.swift")
+            XCTAssertEqual(piece.url, "https://github.com/example/timily")
+            XCTAssertEqual(piece.note, "Implementation")
+        }
+    }
+
     // MARK: Boundary / edge cases
 
     @MainActor

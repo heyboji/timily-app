@@ -60,6 +60,7 @@
 		AA1000000000000000000051 /* ActivityTimelineServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000051 /* ActivityTimelineServiceTests.swift */; };
 		AA1000000000000000000052 /* ActivityTimelineViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000052 /* ActivityTimelineViewModel.swift */; };
 		AA1000000000000000000053 /* ActivityTimelineViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000053 /* ActivityTimelineViewModelTests.swift */; };
+		AA1000000000000000000054 /* ActivitySegmentReconciler.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000054 /* ActivitySegmentReconciler.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -128,6 +129,7 @@
 		AA2100000000000000000051 /* ActivityTimelineServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityTimelineServiceTests.swift; sourceTree = "<group>"; };
 		AA2100000000000000000052 /* ActivityTimelineViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityTimelineViewModel.swift; sourceTree = "<group>"; };
 		AA2100000000000000000053 /* ActivityTimelineViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityTimelineViewModelTests.swift; sourceTree = "<group>"; };
+		AA2100000000000000000054 /* ActivitySegmentReconciler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivitySegmentReconciler.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -200,6 +202,7 @@
 				AA2100000000000000000046 /* ActivityMonitor.swift */,
 				AA2100000000000000000048 /* ActivityMaterializer.swift */,
 				AA2100000000000000000050 /* ActivityTimelineService.swift */,
+				AA2100000000000000000054 /* ActivitySegmentReconciler.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -406,6 +409,7 @@
 				AA1000000000000000000048 /* ActivityMaterializer.swift in Sources */,
 				AA1000000000000000000050 /* ActivityTimelineService.swift in Sources */,
 				AA1000000000000000000052 /* ActivityTimelineViewModel.swift in Sources */,
+				AA1000000000000000000054 /* ActivitySegmentReconciler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

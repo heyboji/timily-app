@@ -255,10 +255,14 @@ struct TimerService {
             excluding: timer.id,
             in: context
         )
-        let affectedSegments = try activitySegments(
+        let reconciler = ActivitySegmentReconciler()
+        let affectedSegments = try reconciler.snapshot(
             ownedBy: [timer] + conflicts,
             in: context
         )
+        let unownedPolicy: UnownedActivitySegmentPolicy = discardingUnownedActivity
+            ? .delete
+            : .throwError
 
         do {
             switch resolution {
@@ -276,10 +280,10 @@ struct TimerService {
                 timer.endDate = range.end
                 timer.lastHeartbeatDate = nil
                 finalEntries.append(timer)
-                try reconcile(
+                try reconciler.redistribute(
                     affectedSegments,
-                    with: finalEntries,
-                    discardingUnowned: discardingUnownedActivity,
+                    among: finalEntries,
+                    unownedPolicy: unownedPolicy,
                     in: context
                 )
                 try context.save()
@@ -296,10 +300,10 @@ struct TimerService {
 
                 guard let first = fragments.first else {
                     context.delete(timer)
-                    try reconcile(
+                    try reconciler.redistribute(
                         affectedSegments,
-                        with: conflicts,
-                        discardingUnowned: discardingUnownedActivity,
+                        among: conflicts,
+                        unownedPolicy: unownedPolicy,
                         in: context
                     )
                     try context.save()
@@ -326,10 +330,10 @@ struct TimerService {
                     entries.append(entry)
                 }
 
-                try reconcile(
+                try reconciler.redistribute(
                     affectedSegments,
-                    with: conflicts + entries,
-                    discardingUnowned: discardingUnownedActivity,
+                    among: conflicts + entries,
+                    unownedPolicy: unownedPolicy,
                     in: context
                 )
                 try context.save()
@@ -341,106 +345,6 @@ struct TimerService {
         }
     }
 
-    private func activitySegments(
-        ownedBy entries: [TimeEntry],
-        in context: ModelContext
-    ) throws -> [ActivitySegment] {
-        let ownerIDs = Set(entries.map(\.id))
-        return try context.fetch(FetchDescriptor<ActivitySegment>()).filter { segment in
-            guard let ownerID = segment.timeEntry?.id else { return false }
-            return ownerIDs.contains(ownerID)
-        }
-    }
-
-    private func reconcile(
-        _ segments: [ActivitySegment],
-        with entries: [TimeEntry],
-        discardingUnowned: Bool,
-        in context: ModelContext
-    ) throws {
-        let sortedEntries = entries.sorted { lhs, rhs in
-            if lhs.startDate != rhs.startDate {
-                return lhs.startDate < rhs.startDate
-            }
-            return lhs.id.uuidString < rhs.id.uuidString
-        }
-
-        for segment in segments {
-            let boundaries = segmentBoundaries(segment, entries: sortedEntries)
-            var reusedOriginal = false
-
-            for pair in zip(boundaries, boundaries.dropFirst()) {
-                let start = pair.0
-                let end = pair.1
-                guard end > start else { continue }
-                guard let owner = owner(
-                    forStart: start,
-                    end: end,
-                    entries: sortedEntries
-                ) else {
-                    if discardingUnowned { continue }
-                    throw TimerActivityReconciliationError.missingOwner
-                }
-
-                if !reusedOriginal {
-                    segment.startDate = start
-                    segment.endDate = end
-                    segment.timeEntry = owner
-                    reusedOriginal = true
-                } else {
-                    context.insert(
-                        ActivitySegment(
-                            appBundleId: segment.appBundleId,
-                            appName: segment.appName,
-                            windowTitle: segment.windowTitle,
-                            documentPath: segment.documentPath,
-                            url: segment.url,
-                            startDate: start,
-                            endDate: end,
-                            timeEntry: owner,
-                            note: segment.note
-                        )
-                    )
-                }
-            }
-
-            if !reusedOriginal {
-                context.delete(segment)
-            }
-        }
-    }
-
-    private func segmentBoundaries(
-        _ segment: ActivitySegment,
-        entries: [TimeEntry]
-    ) -> [Date] {
-        var boundaries: Set<Date> = [segment.startDate, segment.endDate]
-
-        for entry in entries {
-            if entry.startDate > segment.startDate && entry.startDate < segment.endDate {
-                boundaries.insert(entry.startDate)
-            }
-            if let endDate = entry.endDate,
-               endDate > segment.startDate,
-               endDate < segment.endDate {
-                boundaries.insert(endDate)
-            }
-        }
-
-        return boundaries.sorted()
-    }
-
-    private func owner(
-        forStart start: Date,
-        end: Date,
-        entries: [TimeEntry]
-    ) -> TimeEntry? {
-        entries.first { entry in
-            guard let entryEnd = entry.endDate else { return false }
-            return entry.startDate <= start && entryEnd >= end
-        }
-    }
-
     private func saveOrRollback(_ context: ModelContext) throws {
         do {
             try context.save()
@@ -449,8 +353,4 @@ struct TimerService {
             throw error
         }
     }
-}
-
-private enum TimerActivityReconciliationError: Error {
-    case missingOwner
 }
