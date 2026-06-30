@@ -11,6 +11,9 @@ struct TimilyApp: App {
         do {
             let container = try PersistenceController.makeContainer()
             let settings = try PersistenceController.bootstrapSettings(in: container.mainContext)
+
+            let activityMaterializer = ActivityMaterializer(context: container.mainContext)
+            try activityMaterializer.materializePendingSegments()
             _ = try TimerService().recover(in: container.mainContext)
 
             let timerViewModel = TimerViewModel()
@@ -23,7 +26,7 @@ struct TimilyApp: App {
                     threshold: TimeInterval(settings.idleThresholdSeconds)
                 ),
                 workspaceSource: SystemActivityWorkspaceSource(),
-                segmentSink: SwiftDataActivitySegmentSink(context: container.mainContext),
+                segmentSink: activityMaterializer,
                 saveSettings: {
                     do {
                         try container.mainContext.save()

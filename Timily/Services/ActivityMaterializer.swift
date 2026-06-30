@@ -22,6 +22,31 @@ final class ActivityMaterializer: ActivitySegmentSink {
         self.rollback = rollback ?? { context.rollback() }
     }
 
+    func materializePendingSegments() throws {
+        let pending = try context.fetch(FetchDescriptor<ActivitySegment>())
+            .filter { $0.timeEntry == nil }
+            .sorted { lhs, rhs in
+                if lhs.startDate != rhs.startDate {
+                    return lhs.startDate < rhs.startDate
+                }
+                return lhs.id.uuidString < rhs.id.uuidString
+            }
+
+        for segment in pending {
+            try record(
+                CompletedActivitySegment(
+                    id: segment.id,
+                    application: TrackedApplication(
+                        bundleIdentifier: segment.appBundleId,
+                        displayName: segment.appName
+                    ),
+                    startDate: segment.startDate,
+                    endDate: segment.endDate
+                )
+            )
+        }
+    }
+
     func record(_ completed: CompletedActivitySegment) throws {
         let range = try TimeRange(start: completed.startDate, end: completed.endDate)
         guard range.start < range.end else { return }
@@ -61,9 +86,13 @@ final class ActivityMaterializer: ActivitySegmentSink {
                         id: index == 0 ? completed.id : UUID(),
                         appBundleId: completed.application.bundleIdentifier,
                         appName: completed.application.displayName,
+                        windowTitle: existingMarker?.windowTitle,
+                        documentPath: existingMarker?.documentPath,
+                        url: existingMarker?.url,
                         startDate: start,
                         endDate: end,
-                        timeEntry: entry
+                        timeEntry: entry,
+                        note: existingMarker?.note
                     )
                 }
 

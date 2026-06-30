@@ -15,8 +15,9 @@ struct MenuBarContentView: View {
                 action: toggleTrackingPause
             )
         } else {
-            Button("Auto Tracking Off") {}
-                .disabled(true)
+            Button("Enable Auto Tracking") {
+                activityMonitor.setAutoTrackingEnabled(true)
+            }
         }
 
         Divider()

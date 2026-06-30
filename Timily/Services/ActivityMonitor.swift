@@ -1,7 +1,6 @@
 import AppKit
 import Foundation
 import Observation
-import SwiftData
 
 nonisolated struct TrackedApplication: Equatable, Sendable {
     let bundleIdentifier: String
@@ -48,34 +47,6 @@ protocol ActivityWorkspaceSource: AnyObject {
 @MainActor
 protocol ActivitySegmentSink: AnyObject {
     func record(_ segment: CompletedActivitySegment) throws
-}
-
-@MainActor
-final class SwiftDataActivitySegmentSink: ActivitySegmentSink {
-    private let context: ModelContext
-
-    init(context: ModelContext) {
-        self.context = context
-    }
-
-    func record(_ segment: CompletedActivitySegment) throws {
-        context.insert(
-            ActivitySegment(
-                id: segment.id,
-                appBundleId: segment.application.bundleIdentifier,
-                appName: segment.application.displayName,
-                startDate: segment.startDate,
-                endDate: segment.endDate
-            )
-        )
-
-        do {
-            try context.save()
-        } catch {
-            context.rollback()
-            throw error
-        }
-    }
 }
 
 @MainActor

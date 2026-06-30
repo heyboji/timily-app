@@ -147,6 +147,67 @@ final class ActivityMaterializerTests: XCTestCase {
         XCTAssertNotNil(segments[0].timeEntry)
     }
 
+    func testPendingRawSegmentIsSplitLinkedAndPreservesMetadata() throws {
+        let context = try makeContext()
+        let existing = insertEntry(10, 20, source: .manual, in: context)
+        let raw = ActivitySegment(
+            appBundleId: application.bundleIdentifier,
+            appName: application.displayName,
+            windowTitle: "Design",
+            documentPath: "/document",
+            url: "https://example.com/path",
+            startDate: date(0),
+            endDate: date(30),
+            note: "Captured"
+        )
+        context.insert(raw)
+        try context.save()
+
+        let materializer = materializer(context)
+        try materializer.materializePendingSegments()
+        try materializer.materializePendingSegments()
+
+        let segments = try sortedSegments(context)
+        XCTAssertEqual(segments.count, 3)
+        XCTAssertEqual(segments[1].timeEntry?.id, existing.id)
+        XCTAssertTrue(segments.allSatisfy { $0.timeEntry != nil })
+        XCTAssertTrue(segments.allSatisfy { $0.windowTitle == "Design" })
+        XCTAssertTrue(segments.allSatisfy { $0.documentPath == "/document" })
+        XCTAssertTrue(segments.allSatisfy { $0.url == "https://example.com/path" })
+        XCTAssertTrue(segments.allSatisfy { $0.note == "Captured" })
+    }
+
+    func testBackfillBeforeRecoveryExcludesPostHeartbeatActivity() throws {
+        let context = try makeContext()
+        let timer = TimeEntry(
+            startDate: date(0),
+            source: .timer,
+            lastHeartbeatDate: date(30)
+        )
+        context.insert(timer)
+        context.insert(
+            ActivitySegment(
+                appBundleId: application.bundleIdentifier,
+                appName: application.displayName,
+                startDate: date(20),
+                endDate: date(40)
+            )
+        )
+        try context.save()
+
+        try materializer(context).materializePendingSegments()
+        _ = try TimerService().recover(in: context)
+
+        let entries = try sortedEntries(context)
+        let segments = try sortedSegments(context)
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertEqual(entries[0].source, .timer)
+        assertRange(entries[0], 0, 30)
+        XCTAssertEqual(segments.count, 1)
+        assertRange(segments[0], 20, 30)
+        XCTAssertEqual(segments[0].timeEntry?.id, entries[0].id)
+    }
+
     func testUniqueRuleAssignsOnlyNewGapEntry() throws {
         let context = try makeContext()
         let manualProject = Project(name: "Manual", colorHex: "#111111")
