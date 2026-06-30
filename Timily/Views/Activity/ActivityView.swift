@@ -3,6 +3,7 @@ import SwiftUI
 
 struct ActivityView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(ActivityTimelineViewModel.self) private var timelineViewModel
 
     @Query(sort: \TimeEntry.startDate, order: .reverse)
     private var entries: [TimeEntry]
@@ -11,7 +12,6 @@ struct ActivityView: View {
     private var projects: [Project]
 
     @State private var viewModel = ManualEntriesViewModel()
-    @State private var timelineViewModel = ActivityTimelineViewModel()
     @State private var pendingActivityDeletionID: UUID?
 
     var body: some View {
@@ -143,6 +143,7 @@ struct ActivityView: View {
                 onEdit: { viewModel.presentEditor(for: entry) },
                 onDelete: { viewModel.delete(entry, in: modelContext) }
             )
+            .draggable(dragPayload(for: .entry(entry.id)))
         }
     }
 
@@ -155,6 +156,7 @@ struct ActivityView: View {
                 canDeleteActivity: timelineViewModel.canDeleteActivity(segment),
                 onDeleteActivity: { pendingActivityDeletionID = segment.id }
             )
+            .draggable(dragPayload(for: .segment(segment.id)))
         }
     }
 
@@ -278,6 +280,27 @@ struct ActivityView: View {
             timelineViewModel.assignSelected(from: dayEntries, to: project, in: modelContext)
         } else {
             timelineViewModel.assignSelectedSegments(to: project, in: modelContext)
+        }
+    }
+
+    private func dragPayload(
+        for item: ActivityTimelineSelection
+    ) -> ActivitySelectionTransfer {
+        switch item {
+        case let .entry(id):
+            let selected = timelineViewModel.selectedEntryIDs
+            let ids = selected.contains(id) ? Array(selected) : [id]
+            return ActivitySelectionTransfer(
+                entryIDs: ids.sorted { $0.uuidString < $1.uuidString },
+                segmentIDs: []
+            )
+        case let .segment(id):
+            let selected = timelineViewModel.selectedSegmentIDs
+            let ids = selected.contains(id) ? Array(selected) : [id]
+            return ActivitySelectionTransfer(
+                entryIDs: [],
+                segmentIDs: ids.sorted { $0.uuidString < $1.uuidString }
+            )
         }
     }
 

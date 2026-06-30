@@ -323,6 +323,18 @@ final class ActivityTimelineViewModelTests: XCTestCase {
         XCTAssertEqual(end, day.end)
     }
 
+    func testActivitySelectionTransferRoundTripsIDs() throws {
+        let payload = ActivitySelectionTransfer(
+            entryIDs: [UUID(), UUID()],
+            segmentIDs: []
+        )
+
+        let data = try JSONEncoder().encode(payload)
+        let decoded = try JSONDecoder().decode(ActivitySelectionTransfer.self, from: data)
+
+        XCTAssertEqual(decoded, payload)
+    }
+
     private func utcCalendar() -> Calendar {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(secondsFromGMT: 0)!
