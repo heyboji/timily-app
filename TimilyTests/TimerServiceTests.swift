@@ -51,6 +51,12 @@ final class TimerServiceTests: XCTestCase {
         )
     }
 
+    private func sortedSegments(in context: ModelContext) throws -> [ActivitySegment] {
+        try context.fetch(
+            FetchDescriptor<ActivitySegment>(sortBy: [SortDescriptor(\.startDate)])
+        )
+    }
+
     private func assertNoOverlaps(
         _ entries: [TimeEntry],
         file: StaticString = #filePath,
@@ -62,6 +68,21 @@ final class TimerServiceTests: XCTestCase {
                 continue
             }
             XCTAssertLessThanOrEqual(leftEnd, pair.1.startDate, file: file, line: line)
+        }
+    }
+
+    private func assertSegmentsAreContained(
+        _ segments: [ActivitySegment],
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        for segment in segments {
+            guard let owner = segment.timeEntry, let ownerEnd = owner.endDate else {
+                XCTFail("segment has no completed owner", file: file, line: line)
+                continue
+            }
+            XCTAssertLessThanOrEqual(owner.startDate, segment.startDate, file: file, line: line)
+            XCTAssertGreaterThanOrEqual(ownerEnd, segment.endDate, file: file, line: line)
         }
     }
 
@@ -316,6 +337,100 @@ final class TimerServiceTests: XCTestCase {
         assertNoOverlaps(try sortedEntries(in: context))
     }
 
+    func testStopKeepingExistingRedistributesTimerActivitySegments() throws {
+        let context = try makeContext()
+        let existing = TimeEntry(startDate: date(40), endDate: date(60), source: .manual)
+        context.insert(existing)
+        try context.save()
+        let clock = MutableClock(date(0))
+        let service = TimerService(clock: clock)
+        let timer = try service.start(in: context)
+        context.insert(
+            ActivitySegment(
+                appBundleId: "com.example.editor",
+                appName: "Editor",
+                startDate: date(20),
+                endDate: date(80),
+                timeEntry: timer
+            )
+        )
+        try context.save()
+
+        clock.now = date(100)
+        let timerFragments = try service.stop(resolving: .keepExisting, in: context)
+        let segments = try sortedSegments(in: context)
+
+        XCTAssertEqual(segments.map(\.startDate), [date(20), date(40), date(60)])
+        XCTAssertEqual(segments.map(\.endDate), [date(40), date(60), date(80)])
+        XCTAssertEqual(segments[0].timeEntry?.id, timerFragments[0].id)
+        XCTAssertEqual(segments[1].timeEntry?.id, existing.id)
+        XCTAssertEqual(segments[2].timeEntry?.id, timerFragments[1].id)
+        assertSegmentsAreContained(segments)
+    }
+
+    func testStopReplacingExistingRedistributesEnclosingEntrySegments() throws {
+        let context = try makeContext()
+        let existing = TimeEntry(startDate: date(-20), endDate: date(120), source: .manual)
+        context.insert(existing)
+        context.insert(
+            ActivitySegment(
+                appBundleId: "com.example.editor",
+                appName: "Editor",
+                startDate: date(-10),
+                endDate: date(110),
+                timeEntry: existing
+            )
+        )
+        try context.save()
+        let clock = MutableClock(date(0))
+        let service = TimerService(clock: clock)
+        let timer = try service.start(in: context)
+
+        clock.now = date(100)
+        _ = try service.stop(resolving: .replaceExisting, in: context)
+        let entries = try sortedEntries(in: context)
+        let segments = try sortedSegments(in: context)
+
+        XCTAssertEqual(entries.map(\.startDate), [date(-20), date(0), date(100)])
+        XCTAssertEqual(entries.compactMap(\.endDate), [date(0), date(100), date(120)])
+        XCTAssertEqual(segments.map(\.startDate), [date(-10), date(0), date(100)])
+        XCTAssertEqual(segments.map(\.endDate), [date(0), date(100), date(110)])
+        XCTAssertEqual(segments[1].timeEntry?.id, timer.id)
+        assertSegmentsAreContained(segments)
+        assertNoOverlaps(entries)
+    }
+
+    func testReconciliationFailureRollsBackTimerAndSegment() throws {
+        let context = try makeContext()
+        let clock = MutableClock(date(0))
+        let service = TimerService(clock: clock)
+        let timer = try service.start(in: context)
+        let segment = ActivitySegment(
+            appBundleId: "com.example.editor",
+            appName: "Editor",
+            startDate: date(-10),
+            endDate: date(10),
+            timeEntry: timer
+        )
+        context.insert(segment)
+        try context.save()
+
+        clock.now = date(20)
+        XCTAssertThrowsError(
+            try service.stop(resolving: .replaceExisting, in: context)
+        )
+
+        let restoredTimer = try XCTUnwrap(try service.activeTimer(in: context))
+        let restoredSegment = try XCTUnwrap(try sortedSegments(in: context).first)
+        XCTAssertEqual(restoredTimer.id, timer.id)
+        XCTAssertNil(restoredTimer.endDate)
+        XCTAssertEqual(restoredSegment.id, segment.id)
+        XCTAssertEqual(restoredSegment.startDate, date(-10))
+        XCTAssertEqual(restoredSegment.endDate, date(10))
+        XCTAssertEqual(restoredSegment.timeEntry?.id, restoredTimer.id)
+        XCTAssertEqual(restoredTimer.activitySegments.map(\.id), [restoredSegment.id])
+    }
+
     // MARK: - Heartbeat
 
     func testHeartbeatUpdatesLastHeartbeatDate() throws {
@@ -371,6 +486,56 @@ final class TimerServiceTests: XCTestCase {
         XCTAssertEqual(recovered?.endDate, date(120))
         XCTAssertNil(recovered?.lastHeartbeatDate)
         XCTAssertNil(try service.activeTimer(in: context))
+    }
+
+    func testRecoverClipsActivitySegmentAtLastHeartbeat() throws {
+        let context = try makeContext()
+        let timer = TimeEntry(
+            startDate: date(0),
+            source: .timer,
+            lastHeartbeatDate: date(30)
+        )
+        let segment = ActivitySegment(
+            appBundleId: "com.example.editor",
+            appName: "Editor",
+            startDate: date(20),
+            endDate: date(40),
+            timeEntry: timer
+        )
+        context.insert(timer)
+        context.insert(segment)
+        try context.save()
+
+        let recovered = try TimerService(clock: MutableClock(date(999))).recover(in: context)
+
+        XCTAssertEqual(recovered?.endDate, date(30))
+        XCTAssertEqual(segment.startDate, date(20))
+        XCTAssertEqual(segment.endDate, date(30))
+        XCTAssertEqual(segment.timeEntry?.id, timer.id)
+    }
+
+    func testRecoverDeletesActivityWhollyAfterLastHeartbeat() throws {
+        let context = try makeContext()
+        let timer = TimeEntry(
+            startDate: date(0),
+            source: .timer,
+            lastHeartbeatDate: date(30)
+        )
+        context.insert(timer)
+        context.insert(
+            ActivitySegment(
+                appBundleId: "com.example.editor",
+                appName: "Editor",
+                startDate: date(35),
+                endDate: date(40),
+                timeEntry: timer
+            )
+        )
+        try context.save()
+
+        _ = try TimerService(clock: MutableClock(date(999))).recover(in: context)
+
+        XCTAssertTrue(try sortedSegments(in: context).isEmpty)
     }
 
     func testRecoverStopsAtStartWhenNoHeartbeat() throws {

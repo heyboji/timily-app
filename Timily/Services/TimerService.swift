@@ -149,7 +149,13 @@ struct TimerService {
     ) throws -> [TimeEntry] {
         guard let timer = try activeTimer(in: context) else { return [] }
         let end = max(clock.now, timer.startDate)
-        return try complete(timer, at: end, resolving: resolution, in: context)
+        return try complete(
+            timer,
+            at: end,
+            resolving: resolution,
+            discardingUnownedActivity: false,
+            in: context
+        )
     }
 
     /// Records a liveness heartbeat on the running timer.
@@ -179,7 +185,13 @@ struct TimerService {
         guard let timer = try activeTimer(in: context) else { return nil }
 
         let end = max(timer.startDate, timer.lastHeartbeatDate ?? timer.startDate)
-        return try complete(timer, at: end, resolving: .keepExisting, in: context).first
+        return try complete(
+            timer,
+            at: end,
+            resolving: .keepExisting,
+            discardingUnownedActivity: true,
+            in: context
+        ).first
     }
 
     // MARK: - Presets
@@ -233,6 +245,7 @@ struct TimerService {
         _ timer: TimeEntry,
         at end: Date,
         resolving resolution: TimerStopResolution,
+        discardingUnownedActivity: Bool,
         in context: ModelContext
     ) throws -> [TimeEntry] {
         let range = TimeRange.clampingEnd(start: timer.startDate, end: end)
@@ -242,19 +255,33 @@ struct TimerService {
             excluding: timer.id,
             in: context
         )
+        let affectedSegments = try activitySegments(
+            ownedBy: [timer] + conflicts,
+            in: context
+        )
 
         do {
             switch resolution {
             case .replaceExisting:
+                var finalEntries: [TimeEntry] = []
                 for conflict in conflicts {
-                    try entryService.resolveConflict(
-                        existing: conflict,
-                        with: range,
-                        in: context
+                    finalEntries.append(
+                        contentsOf: try entryService.resolveConflict(
+                            existing: conflict,
+                            with: range,
+                            in: context
+                        )
                     )
                 }
                 timer.endDate = range.end
                 timer.lastHeartbeatDate = nil
+                finalEntries.append(timer)
+                try reconcile(
+                    affectedSegments,
+                    with: finalEntries,
+                    discardingUnowned: discardingUnownedActivity,
+                    in: context
+                )
                 try context.save()
                 return [timer]
 
@@ -269,6 +296,12 @@ struct TimerService {
 
                 guard let first = fragments.first else {
                     context.delete(timer)
+                    try reconcile(
+                        affectedSegments,
+                        with: conflicts,
+                        discardingUnowned: discardingUnownedActivity,
+                        in: context
+                    )
                     try context.save()
                     return []
                 }
@@ -293,12 +326,118 @@ struct TimerService {
                     entries.append(entry)
                 }
 
+                try reconcile(
+                    affectedSegments,
+                    with: conflicts + entries,
+                    discardingUnowned: discardingUnownedActivity,
+                    in: context
+                )
                 try context.save()
                 return entries
             }
         } catch {
             context.rollback()
             throw error
+        }
+    }
+
+    private func activitySegments(
+        ownedBy entries: [TimeEntry],
+        in context: ModelContext
+    ) throws -> [ActivitySegment] {
+        let ownerIDs = Set(entries.map(\.id))
+        return try context.fetch(FetchDescriptor<ActivitySegment>()).filter { segment in
+            guard let ownerID = segment.timeEntry?.id else { return false }
+            return ownerIDs.contains(ownerID)
+        }
+    }
+
+    private func reconcile(
+        _ segments: [ActivitySegment],
+        with entries: [TimeEntry],
+        discardingUnowned: Bool,
+        in context: ModelContext
+    ) throws {
+        let sortedEntries = entries.sorted { lhs, rhs in
+            if lhs.startDate != rhs.startDate {
+                return lhs.startDate < rhs.startDate
+            }
+            return lhs.id.uuidString < rhs.id.uuidString
+        }
+
+        for segment in segments {
+            let boundaries = segmentBoundaries(segment, entries: sortedEntries)
+            var reusedOriginal = false
+
+            for pair in zip(boundaries, boundaries.dropFirst()) {
+                let start = pair.0
+                let end = pair.1
+                guard end > start else { continue }
+                guard let owner = owner(
+                    forStart: start,
+                    end: end,
+                    entries: sortedEntries
+                ) else {
+                    if discardingUnowned { continue }
+                    throw TimerActivityReconciliationError.missingOwner
+                }
+
+                if !reusedOriginal {
+                    segment.startDate = start
+                    segment.endDate = end
+                    segment.timeEntry = owner
+                    reusedOriginal = true
+                } else {
+                    context.insert(
+                        ActivitySegment(
+                            appBundleId: segment.appBundleId,
+                            appName: segment.appName,
+                            windowTitle: segment.windowTitle,
+                            documentPath: segment.documentPath,
+                            url: segment.url,
+                            startDate: start,
+                            endDate: end,
+                            timeEntry: owner,
+                            note: segment.note
+                        )
+                    )
+                }
+            }
+
+            if !reusedOriginal {
+                context.delete(segment)
+            }
+        }
+    }
+
+    private func segmentBoundaries(
+        _ segment: ActivitySegment,
+        entries: [TimeEntry]
+    ) -> [Date] {
+        var boundaries: Set<Date> = [segment.startDate, segment.endDate]
+
+        for entry in entries {
+            if entry.startDate > segment.startDate && entry.startDate < segment.endDate {
+                boundaries.insert(entry.startDate)
+            }
+            if let endDate = entry.endDate,
+               endDate > segment.startDate,
+               endDate < segment.endDate {
+                boundaries.insert(endDate)
+            }
+        }
+
+        return boundaries.sorted()
+    }
+
+    private func owner(
+        forStart start: Date,
+        end: Date,
+        entries: [TimeEntry]
+    ) -> TimeEntry? {
+        entries.first { entry in
+            guard let entryEnd = entry.endDate else { return false }
+            return entry.startDate <= start && entryEnd >= end
         }
     }
 
@@ -310,4 +449,8 @@ struct TimerService {
             throw error
         }
     }
+}
+
+private enum TimerActivityReconciliationError: Error {
+    case missingOwner
 }

@@ -209,21 +209,23 @@ struct TimeEntryService {
 
     /// Reconciles one conflicting `existing` entry with the incoming `newRange`.
     /// Does **not** call `context.save()` — the caller is responsible for a single save.
+    @discardableResult
     func resolveConflict(
         existing: TimeEntry,
         with newRange: TimeRange,
         in context: ModelContext
-    ) throws {
+    ) throws -> [TimeEntry] {
         guard let existingEnd = existing.endDate else {
             // Running timer (endDate == nil): truncate or delete.
             if existing.startDate >= newRange.start {
                 // Timer starts inside (or at the edge of) the new range — delete it.
                 context.delete(existing)
+                return []
             } else {
                 // Timer started before the new range — truncate at the new range's start.
                 existing.endDate = newRange.start
+                return [existing]
             }
-            return
         }
 
         let existingRange = try TimeRange(start: existing.startDate, end: existingEnd)
@@ -233,11 +235,13 @@ struct TimeEntryService {
         case 0:
             // New range completely covers existing entry — delete it.
             context.delete(existing)
+            return []
 
         case 1:
             // Partial overlap on one side — resize existing to the surviving piece.
             existing.startDate = pieces[0].start
             existing.endDate = pieces[0].end
+            return [existing]
 
         case 2:
             // New range is strictly interior — keep existing as the left piece,
@@ -245,9 +249,10 @@ struct TimeEntryService {
             existing.endDate = pieces[0].end
             let rightEntry = copy(existing, with: pieces[1])
             context.insert(rightEntry)
+            return [existing, rightEntry]
 
         default:
-            break
+            return [existing]
         }
     }
 
