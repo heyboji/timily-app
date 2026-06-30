@@ -50,6 +50,8 @@
 		AA1000000000000000000041 /* TimerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000041 /* TimerViewModel.swift */; };
 		AA1000000000000000000042 /* TimerControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000042 /* TimerControlView.swift */; };
 		AA1000000000000000000043 /* TimerViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000043 /* TimerViewModelTests.swift */; };
+		AA1000000000000000000044 /* DiagnosticLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000044 /* DiagnosticLogger.swift */; };
+		AA1000000000000000000045 /* DiagnosticLoggerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000045 /* DiagnosticLoggerTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -108,6 +110,8 @@
 		AA2100000000000000000041 /* TimerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerViewModel.swift; sourceTree = "<group>"; };
 		AA2100000000000000000042 /* TimerControlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerControlView.swift; sourceTree = "<group>"; };
 		AA2100000000000000000043 /* TimerViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerViewModelTests.swift; sourceTree = "<group>"; };
+		AA2100000000000000000044 /* DiagnosticLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticLogger.swift; sourceTree = "<group>"; };
+		AA2100000000000000000045 /* DiagnosticLoggerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticLoggerTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -176,6 +180,7 @@
 				AA2100000000000000000035 /* RuleEngine.swift */,
 				AA2100000000000000000037 /* TimerService.swift */,
 				AA2100000000000000000039 /* Aggregator.swift */,
+				AA2100000000000000000044 /* DiagnosticLogger.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -247,6 +252,7 @@
 				AA2100000000000000000038 /* TimerServiceTests.swift */,
 				AA2100000000000000000040 /* AggregatorTests.swift */,
 				AA2100000000000000000043 /* TimerViewModelTests.swift */,
+				AA2100000000000000000045 /* DiagnosticLoggerTests.swift */,
 			);
 			path = TimilyTests;
 			sourceTree = "<group>";
@@ -371,6 +377,7 @@
 				AA1000000000000000000039 /* Aggregator.swift in Sources */,
 				AA1000000000000000000041 /* TimerViewModel.swift in Sources */,
 				AA1000000000000000000042 /* TimerControlView.swift in Sources */,
+				AA1000000000000000000044 /* DiagnosticLogger.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -388,6 +395,7 @@
 				AA1000000000000000000038 /* TimerServiceTests.swift in Sources */,
 				AA1000000000000000000040 /* AggregatorTests.swift in Sources */,
 				AA1000000000000000000043 /* TimerViewModelTests.swift in Sources */,
+				AA1000000000000000000045 /* DiagnosticLoggerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
