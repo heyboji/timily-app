@@ -30,10 +30,13 @@ struct TimerControlView: View {
         sort: \Project.name
     ) private var activeProjects: [Project]
 
+    @State private var projectsViewModel = ProjectsViewModel()
+
     let layout: Layout
 
     var body: some View {
         @Bindable var viewModel = viewModel
+        @Bindable var projectsViewModel = projectsViewModel
 
         VStack(alignment: .leading, spacing: layout == .compact ? 10 : 16) {
             if let timer = viewModel.activeTimer {
@@ -78,6 +81,20 @@ struct TimerControlView: View {
                     + "only the timer’s non-overlapping parts."
             )
         }
+        .sheet(item: $projectsViewModel.editorState) { state in
+            ProjectEditorView(
+                state: state,
+                onCancel: projectsViewModel.dismissEditor,
+                onSave: saveAndSelectProject
+            )
+        }
+        .alert(
+            "Couldn’t Create Project",
+            isPresented: $projectsViewModel.isShowingError
+        ) {
+        } message: {
+            Text(projectsViewModel.errorMessage)
+        }
     }
 
     @ViewBuilder
@@ -106,10 +123,23 @@ struct TimerControlView: View {
         @Bindable var viewModel = viewModel
 
         return VStack(alignment: .leading, spacing: layout == .compact ? 8 : 12) {
-            Picker("Project", selection: $viewModel.projectID) {
-                Text("Unassigned").tag(nil as UUID?)
-                ForEach(activeProjects) { project in
-                    Text(project.name).tag(project.id as UUID?)
+            LabeledContent("Project") {
+                Menu(selectedProjectName) {
+                    Button("Unassigned") {
+                        viewModel.projectID = nil
+                    }
+
+                    ForEach(activeProjects) { project in
+                        Button(project.name) {
+                            viewModel.projectID = project.id
+                        }
+                    }
+
+                    Divider()
+
+                    Button("Add New…", systemImage: "plus") {
+                        projectsViewModel.presentNewProject()
+                    }
                 }
             }
 
@@ -137,6 +167,20 @@ struct TimerControlView: View {
             return project
         }
         return "\(project) — \(description)"
+    }
+
+    private var selectedProjectName: String {
+        guard let projectID = viewModel.projectID else { return "Unassigned" }
+        return activeProjects.first { $0.id == projectID }?.name ?? "Unassigned"
+    }
+
+    private func saveAndSelectProject(_ state: ProjectEditorState) -> Bool {
+        guard let project = projectsViewModel.saveProject(state, in: modelContext) else {
+            return false
+        }
+
+        viewModel.projectID = project.id
+        return true
     }
 }
 

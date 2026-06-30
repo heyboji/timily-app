@@ -13,9 +13,10 @@ final class ProjectsViewModelTests: XCTestCase {
         editor.colorHex = "#0A84FF"
         editor.note = "  Homepage redesign  "
 
-        XCTAssertTrue(viewModel.save(editor, in: context))
+        let createdProject = try XCTUnwrap(viewModel.saveProject(editor, in: context))
 
         let project = try XCTUnwrap(context.fetch(FetchDescriptor<Project>()).first)
+        XCTAssertEqual(createdProject.id, project.id)
         XCTAssertEqual(project.name, "Client Website")
         XCTAssertEqual(project.colorHex, "#0A84FF")
         XCTAssertEqual(project.note, "Homepage redesign")

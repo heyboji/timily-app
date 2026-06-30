@@ -22,28 +22,34 @@ final class ProjectsViewModel {
 
     @discardableResult
     func save(_ state: ProjectEditorState, in context: ModelContext) -> Bool {
+        saveProject(state, in: context) != nil
+    }
+
+    @discardableResult
+    func saveProject(_ state: ProjectEditorState, in context: ModelContext) -> Project? {
         let name = state.name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty else { return false }
+        guard !name.isEmpty else { return nil }
 
         let note = state.note.trimmingCharacters(in: .whitespacesAndNewlines)
+        let project: Project
 
-        if let project = state.project {
+        if let existingProject = state.project {
+            project = existingProject
             project.name = name
             project.colorHex = state.colorHex
             project.note = note.isEmpty ? nil : note
         } else {
-            context.insert(
-                Project(
-                    name: name,
-                    colorHex: state.colorHex,
-                    note: note.isEmpty ? nil : note
-                )
+            project = Project(
+                name: name,
+                colorHex: state.colorHex,
+                note: note.isEmpty ? nil : note
             )
+            context.insert(project)
         }
 
-        guard save(context) else { return false }
+        guard save(context) else { return nil }
         editorState = nil
-        return true
+        return project
     }
 
     func toggleArchive(_ project: Project, in context: ModelContext) {
