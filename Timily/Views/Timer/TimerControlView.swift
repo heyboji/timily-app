@@ -61,6 +61,26 @@ struct TimerControlView: View {
         } message: {
             Text(viewModel.errorMessage)
         }
+        .confirmationDialog(
+            "Timer Overlaps Existing Entries",
+            isPresented: $viewModel.isShowingStopConflict,
+            titleVisibility: .visible
+        ) {
+            Button("Replace Existing Entries", role: .destructive) {
+                viewModel.resolveStop(using: .replaceExisting, in: modelContext)
+            }
+            Button("Keep Existing Entries") {
+                viewModel.resolveStop(using: .keepExisting, in: modelContext)
+            }
+            Button("Cancel", role: .cancel) {
+                viewModel.dismissStopConflict()
+            }
+        } message: {
+            Text(
+                "Time entries cannot overlap. Keeping existing entries saves "
+                    + "only the timer’s non-overlapping parts."
+            )
+        }
     }
 
     @ViewBuilder

@@ -108,6 +108,37 @@ final class TimeRangeTests: XCTestCase {
         XCTAssertEqual(pieces[0], existing)
     }
 
+    func testSubtractingEmptyRangeListReturnsSelf() throws {
+        let range = try TimeRange(start: date(0), end: date(10))
+        XCTAssertEqual(range.subtracting([]), [range])
+    }
+
+    func testSubtractingMultipleRangesReturnsChronologicalGaps() throws {
+        let range = try TimeRange(start: date(0), end: date(100))
+        let covers = [
+            try TimeRange(start: date(70), end: date(90)),
+            try TimeRange(start: date(10), end: date(20)),
+            try TimeRange(start: date(40), end: date(50)),
+        ]
+
+        XCTAssertEqual(range.subtracting(covers), [
+            try TimeRange(start: date(0), end: date(10)),
+            try TimeRange(start: date(20), end: date(40)),
+            try TimeRange(start: date(50), end: date(70)),
+            try TimeRange(start: date(90), end: date(100)),
+        ])
+    }
+
+    func testSubtractingAdjacentRangesDoesNotRemoveTime() throws {
+        let range = try TimeRange(start: date(10), end: date(20))
+        let adjacent = [
+            try TimeRange(start: date(0), end: date(10)),
+            try TimeRange(start: date(20), end: date(30)),
+        ]
+
+        XCTAssertEqual(range.subtracting(adjacent), [range])
+    }
+
     // MARK: split(at:)
 
     func testSplitAtValidBoundaryProducesTwoPieces() throws {

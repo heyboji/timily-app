@@ -81,6 +81,17 @@ nonisolated struct TimeRange: Equatable, Sendable {
         return pieces
     }
 
+    /// Returns the portions of `self` not covered by any of `others`.
+    func subtracting(_ others: [TimeRange]) -> [TimeRange] {
+        let sortedOthers = others.sorted {
+            $0.start == $1.start ? $0.end < $1.end : $0.start < $1.start
+        }
+
+        return sortedOthers.reduce([self]) { pieces, other in
+            pieces.flatMap { $0.subtracting(other) }
+        }
+    }
+
     /// Splits `self` at `point`, returning `(left, right)` where
     /// `left = [start, point]` and `right = [point, end]`.
     ///

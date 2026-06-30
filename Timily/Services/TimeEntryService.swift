@@ -179,10 +179,10 @@ struct TimeEntryService {
         }
     }
 
-    // MARK: - Private helpers
+    // MARK: - Internal helpers
 
     /// Fetches entries whose intervals overlap `range` using half-open semantics.
-    private func overlapping(
+    func overlapping(
         range: TimeRange,
         excluding excludedID: UUID? = nil,
         in context: ModelContext
@@ -209,7 +209,7 @@ struct TimeEntryService {
 
     /// Reconciles one conflicting `existing` entry with the incoming `newRange`.
     /// Does **not** call `context.save()` — the caller is responsible for a single save.
-    private func resolveConflict(
+    func resolveConflict(
         existing: TimeEntry,
         with newRange: TimeRange,
         in context: ModelContext
@@ -250,6 +250,8 @@ struct TimeEntryService {
             break
         }
     }
+
+    // MARK: - Private helpers
 
     private func makeEntry(
         range: TimeRange,

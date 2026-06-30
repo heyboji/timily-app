@@ -57,6 +57,126 @@ final class TimerViewModelTests: XCTestCase {
         XCTAssertEqual(activeTimer.endDate, clock.now)
     }
 
+    func testStopConflictPresentsResolutionAndLeavesDatabaseUnchanged() throws {
+        let container = try PersistenceController.makeContainer(inMemory: true)
+        let context = container.mainContext
+        let clock = ViewModelClock(Date(timeIntervalSince1970: 0))
+        let service = TimerService(clock: clock)
+        let viewModel = TimerViewModel(service: service)
+        viewModel.start(projects: [], in: context)
+        let timer = try XCTUnwrap(viewModel.activeTimer)
+        let existing = TimeEntry(
+            startDate: Date(timeIntervalSince1970: 40),
+            endDate: Date(timeIntervalSince1970: 60),
+            source: .manual
+        )
+        context.insert(existing)
+        try context.save()
+
+        clock.now = Date(timeIntervalSince1970: 100)
+        viewModel.stop(in: context)
+
+        XCTAssertTrue(viewModel.isShowingStopConflict)
+        XCTAssertFalse(viewModel.isShowingError)
+        XCTAssertEqual(viewModel.activeTimer?.id, timer.id)
+        XCTAssertNil(timer.endDate)
+        XCTAssertEqual(existing.startDate, Date(timeIntervalSince1970: 40))
+        XCTAssertEqual(existing.endDate, Date(timeIntervalSince1970: 60))
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<TimeEntry>()), 2)
+    }
+
+    func testDismissStopConflictLeavesTimerRunning() throws {
+        let container = try PersistenceController.makeContainer(inMemory: true)
+        let context = container.mainContext
+        let clock = ViewModelClock(Date(timeIntervalSince1970: 0))
+        let service = TimerService(clock: clock)
+        let viewModel = TimerViewModel(service: service)
+        viewModel.start(projects: [], in: context)
+        let timer = try XCTUnwrap(viewModel.activeTimer)
+        context.insert(
+            TimeEntry(
+                startDate: Date(timeIntervalSince1970: 40),
+                endDate: Date(timeIntervalSince1970: 60),
+                source: .manual
+            )
+        )
+        try context.save()
+        clock.now = Date(timeIntervalSince1970: 100)
+        viewModel.stop(in: context)
+
+        viewModel.dismissStopConflict()
+
+        XCTAssertFalse(viewModel.isShowingStopConflict)
+        XCTAssertEqual(viewModel.activeTimer?.id, timer.id)
+        XCTAssertNil(timer.endDate)
+        XCTAssertEqual(try service.activeTimer(in: context)?.id, timer.id)
+    }
+
+    func testResolveStopKeepingExistingCreatesTimerFragments() throws {
+        let container = try PersistenceController.makeContainer(inMemory: true)
+        let context = container.mainContext
+        let clock = ViewModelClock(Date(timeIntervalSince1970: 0))
+        let service = TimerService(clock: clock)
+        let viewModel = TimerViewModel(service: service)
+        viewModel.start(projects: [], in: context)
+        let existing = TimeEntry(
+            startDate: Date(timeIntervalSince1970: 40),
+            endDate: Date(timeIntervalSince1970: 60),
+            source: .manual
+        )
+        context.insert(existing)
+        try context.save()
+        clock.now = Date(timeIntervalSince1970: 100)
+        viewModel.stop(in: context)
+
+        viewModel.resolveStop(using: .keepExisting, in: context)
+
+        let timerEntries = try context.fetch(FetchDescriptor<TimeEntry>())
+            .filter { $0.source == .timer }
+            .sorted { $0.startDate < $1.startDate }
+        XCTAssertEqual(timerEntries.map(\.startDate), [
+            Date(timeIntervalSince1970: 0),
+            Date(timeIntervalSince1970: 60),
+        ])
+        XCTAssertEqual(timerEntries.compactMap(\.endDate), [
+            Date(timeIntervalSince1970: 40),
+            Date(timeIntervalSince1970: 100),
+        ])
+        XCTAssertEqual(existing.startDate, Date(timeIntervalSince1970: 40))
+        XCTAssertEqual(existing.endDate, Date(timeIntervalSince1970: 60))
+        XCTAssertNil(viewModel.activeTimer)
+        XCTAssertFalse(viewModel.isShowingStopConflict)
+        XCTAssertNil(try service.activeTimer(in: context))
+    }
+
+    func testResolveStopReplacingExistingTrimsConflict() throws {
+        let container = try PersistenceController.makeContainer(inMemory: true)
+        let context = container.mainContext
+        let clock = ViewModelClock(Date(timeIntervalSince1970: 0))
+        let service = TimerService(clock: clock)
+        let viewModel = TimerViewModel(service: service)
+        viewModel.start(projects: [], in: context)
+        let timer = try XCTUnwrap(viewModel.activeTimer)
+        let existing = TimeEntry(
+            startDate: Date(timeIntervalSince1970: 40),
+            endDate: Date(timeIntervalSince1970: 120),
+            source: .manual
+        )
+        context.insert(existing)
+        try context.save()
+        clock.now = Date(timeIntervalSince1970: 100)
+        viewModel.stop(in: context)
+
+        viewModel.resolveStop(using: .replaceExisting, in: context)
+
+        XCTAssertEqual(timer.endDate, Date(timeIntervalSince1970: 100))
+        XCTAssertEqual(existing.startDate, Date(timeIntervalSince1970: 100))
+        XCTAssertEqual(existing.endDate, Date(timeIntervalSince1970: 120))
+        XCTAssertNil(viewModel.activeTimer)
+        XCTAssertFalse(viewModel.isShowingStopConflict)
+        XCTAssertNil(try service.activeTimer(in: context))
+    }
+
     func testArchivedProjectCannotBeAssignedWhenStarting() throws {
         let container = try PersistenceController.makeContainer(inMemory: true)
         let context = container.mainContext

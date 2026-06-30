@@ -11,6 +11,7 @@ final class TimerViewModel {
     var presets: [TimerPreset] = []
     var errorMessage = ""
     var isShowingError = false
+    var isShowingStopConflict = false
 
     private let service: TimerService
     private var heartbeatTask: Task<Void, Never>?
@@ -57,12 +58,28 @@ final class TimerViewModel {
     func stop(in context: ModelContext) {
         do {
             _ = try service.stop(in: context)
-            activeTimer = nil
-            cancelHeartbeat()
-            presets = try service.presets(in: context)
+            finishStop(in: context)
+        } catch TimerError.stopConflictsWithExistingEntries {
+            isShowingStopConflict = true
         } catch {
             show(error)
         }
+    }
+
+    func resolveStop(using resolution: TimerStopResolution, in context: ModelContext) {
+        isShowingStopConflict = false
+
+        do {
+            _ = try service.stop(resolving: resolution, in: context)
+            finishStop(in: context)
+        } catch {
+            refresh(in: context)
+            show(error)
+        }
+    }
+
+    func dismissStopConflict() {
+        isShowingStopConflict = false
     }
 
     func applyPreset(_ preset: TimerPreset) {
@@ -74,6 +91,18 @@ final class TimerViewModel {
     private var normalizedDescription: String? {
         let value = entryDescription.trimmingCharacters(in: .whitespacesAndNewlines)
         return value.isEmpty ? nil : value
+    }
+
+    private func finishStop(in context: ModelContext) {
+        activeTimer = nil
+        cancelHeartbeat()
+        isShowingStopConflict = false
+
+        do {
+            presets = try service.presets(in: context)
+        } catch {
+            show(error)
+        }
     }
 
     private func startHeartbeat(in context: ModelContext) {

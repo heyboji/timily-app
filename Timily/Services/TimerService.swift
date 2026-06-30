@@ -23,6 +23,16 @@ nonisolated struct SystemClock: TimerClock {
 enum TimerError: Error, Equatable {
     /// A second timer cannot start while one is already running.
     case timerAlreadyRunning
+    /// The timer cannot stop without resolving overlaps with completed entries.
+    case stopConflictsWithExistingEntries
+}
+
+/// Determines which entries win when a stopped timer overlaps existing work.
+enum TimerStopResolution {
+    /// Keep the complete timer range and trim, split, or delete existing entries.
+    case replaceExisting
+    /// Keep existing entries and save only the timer's non-overlapping fragments.
+    case keepExisting
 }
 
 // MARK: - TimerPreset
@@ -112,10 +122,34 @@ struct TimerService {
     func stop(in context: ModelContext) throws -> TimeEntry? {
         guard let timer = try activeTimer(in: context) else { return nil }
 
-        timer.endDate = max(clock.now, timer.startDate)
+        let range = TimeRange.clampingEnd(start: timer.startDate, end: clock.now)
+        let conflicts = try TimeEntryService().overlapping(
+            range: range,
+            excluding: timer.id,
+            in: context
+        )
+        guard conflicts.isEmpty else {
+            throw TimerError.stopConflictsWithExistingEntries
+        }
+
+        timer.endDate = range.end
         timer.lastHeartbeatDate = nil
         try saveOrRollback(context)
         return timer
+    }
+
+    /// Stops the running timer using an explicit overlap resolution.
+    ///
+    /// - Returns: The completed timer entries, in chronological order. The array
+    ///   is empty when no timer was running or existing entries cover it entirely.
+    @discardableResult
+    func stop(
+        resolving resolution: TimerStopResolution,
+        in context: ModelContext
+    ) throws -> [TimeEntry] {
+        guard let timer = try activeTimer(in: context) else { return [] }
+        let end = max(clock.now, timer.startDate)
+        return try complete(timer, at: end, resolving: resolution, in: context)
     }
 
     /// Records a liveness heartbeat on the running timer.
@@ -144,10 +178,8 @@ struct TimerService {
     func recover(in context: ModelContext) throws -> TimeEntry? {
         guard let timer = try activeTimer(in: context) else { return nil }
 
-        timer.endDate = max(timer.startDate, timer.lastHeartbeatDate ?? timer.startDate)
-        timer.lastHeartbeatDate = nil
-        try saveOrRollback(context)
-        return timer
+        let end = max(timer.startDate, timer.lastHeartbeatDate ?? timer.startDate)
+        return try complete(timer, at: end, resolving: .keepExisting, in: context).first
     }
 
     // MARK: - Presets
@@ -196,6 +228,79 @@ struct TimerService {
     }
 
     // MARK: - Private helpers
+
+    private func complete(
+        _ timer: TimeEntry,
+        at end: Date,
+        resolving resolution: TimerStopResolution,
+        in context: ModelContext
+    ) throws -> [TimeEntry] {
+        let range = TimeRange.clampingEnd(start: timer.startDate, end: end)
+        let entryService = TimeEntryService()
+        let conflicts = try entryService.overlapping(
+            range: range,
+            excluding: timer.id,
+            in: context
+        )
+
+        do {
+            switch resolution {
+            case .replaceExisting:
+                for conflict in conflicts {
+                    try entryService.resolveConflict(
+                        existing: conflict,
+                        with: range,
+                        in: context
+                    )
+                }
+                timer.endDate = range.end
+                timer.lastHeartbeatDate = nil
+                try context.save()
+                return [timer]
+
+            case .keepExisting:
+                let conflictRanges = conflicts.map { conflict in
+                    TimeRange.clampingEnd(
+                        start: conflict.startDate,
+                        end: conflict.endDate ?? range.end
+                    )
+                }
+                let fragments = range.subtracting(conflictRanges)
+
+                guard let first = fragments.first else {
+                    context.delete(timer)
+                    try context.save()
+                    return []
+                }
+
+                timer.startDate = first.start
+                timer.endDate = first.end
+                timer.lastHeartbeatDate = nil
+
+                var entries = [timer]
+                for fragment in fragments.dropFirst() {
+                    let entry = TimeEntry(
+                        startDate: fragment.start,
+                        endDate: fragment.end,
+                        entryDescription: timer.entryDescription,
+                        source: .timer,
+                        project: timer.project,
+                        matchedRule: timer.matchedRule,
+                        lastHeartbeatDate: nil,
+                        createdAt: timer.createdAt
+                    )
+                    context.insert(entry)
+                    entries.append(entry)
+                }
+
+                try context.save()
+                return entries
+            }
+        } catch {
+            context.rollback()
+            throw error
+        }
+    }
 
     private func saveOrRollback(_ context: ModelContext) throws {
         do {

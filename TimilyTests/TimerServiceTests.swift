@@ -45,6 +45,26 @@ final class TimerServiceTests: XCTestCase {
         try context.fetchCount(FetchDescriptor<TimeEntry>())
     }
 
+    private func sortedEntries(in context: ModelContext) throws -> [TimeEntry] {
+        try context.fetch(
+            FetchDescriptor<TimeEntry>(sortBy: [SortDescriptor(\.startDate)])
+        )
+    }
+
+    private func assertNoOverlaps(
+        _ entries: [TimeEntry],
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        for pair in zip(entries, entries.dropFirst()) {
+            guard let leftEnd = pair.0.endDate else {
+                XCTFail("entry is still running", file: file, line: line)
+                continue
+            }
+            XCTAssertLessThanOrEqual(leftEnd, pair.1.startDate, file: file, line: line)
+        }
+    }
+
     // MARK: - Start
 
     func testStartCreatesRunningTimer() throws {
@@ -135,6 +155,165 @@ final class TimerServiceTests: XCTestCase {
         let stopped = try service.stop(in: context)
 
         XCTAssertEqual(stopped?.endDate, date(100))
+    }
+
+    func testStopWithConflictThrowsWithoutMutatingTimer() throws {
+        let context = try makeContext()
+        let clock = MutableClock(date(0))
+        let service = TimerService(clock: clock)
+        let timer = try service.start(in: context)
+        clock.now = date(30)
+        _ = try service.heartbeat(in: context)
+        let existing = TimeEntry(startDate: date(40), endDate: date(60), source: .manual)
+        context.insert(existing)
+        try context.save()
+
+        clock.now = date(100)
+        XCTAssertThrowsError(try service.stop(in: context)) { error in
+            XCTAssertEqual(error as? TimerError, .stopConflictsWithExistingEntries)
+        }
+
+        XCTAssertNil(timer.endDate)
+        XCTAssertEqual(timer.lastHeartbeatDate, date(30))
+        XCTAssertEqual(try service.activeTimer(in: context)?.id, timer.id)
+        XCTAssertEqual(existing.startDate, date(40))
+        XCTAssertEqual(existing.endDate, date(60))
+    }
+
+    func testStopReplacingExistingSplitsEnclosingEntry() throws {
+        let context = try makeContext()
+        context.insert(TimeEntry(startDate: date(0), endDate: date(100), source: .manual))
+        try context.save()
+        let clock = MutableClock(date(30))
+        let service = TimerService(clock: clock)
+        _ = try service.start(in: context)
+
+        clock.now = date(70)
+        let stopped = try service.stop(resolving: .replaceExisting, in: context)
+        let entries = try sortedEntries(in: context)
+
+        XCTAssertEqual(stopped.count, 1)
+        XCTAssertEqual(entries.map(\.startDate), [date(0), date(30), date(70)])
+        XCTAssertEqual(entries.compactMap(\.endDate), [date(30), date(70), date(100)])
+        assertNoOverlaps(entries)
+    }
+
+    func testStopReplacingExistingTrimsAndDeletesConflicts() throws {
+        let context = try makeContext()
+        context.insert(TimeEntry(startDate: date(-20), endDate: date(10), source: .manual))
+        context.insert(TimeEntry(startDate: date(20), endDate: date(30), source: .manual))
+        context.insert(TimeEntry(startDate: date(90), endDate: date(120), source: .manual))
+        try context.save()
+        let clock = MutableClock(date(0))
+        let service = TimerService(clock: clock)
+        _ = try service.start(in: context)
+
+        clock.now = date(100)
+        _ = try service.stop(resolving: .replaceExisting, in: context)
+        let entries = try sortedEntries(in: context)
+
+        XCTAssertEqual(entries.map(\.startDate), [date(-20), date(0), date(100)])
+        XCTAssertEqual(entries.compactMap(\.endDate), [date(0), date(100), date(120)])
+        assertNoOverlaps(entries)
+    }
+
+    func testStopReplacingExistingPreservesTimerIdentityAndMetadata() throws {
+        let context = try makeContext()
+        let project = makeProject("Work", in: context)
+        let rule = AssignmentRule(kind: .application, matchValue: "Editor", project: project)
+        context.insert(rule)
+        context.insert(TimeEntry(startDate: date(40), endDate: date(60), source: .manual))
+        try context.save()
+        let clock = MutableClock(date(0))
+        let service = TimerService(clock: clock)
+        let timer = try service.start(project: project, description: "Focus", in: context)
+        timer.matchedRule = rule
+        timer.createdAt = date(-100)
+        timer.lastHeartbeatDate = date(20)
+        try context.save()
+
+        clock.now = date(100)
+        let stopped = try service.stop(resolving: .replaceExisting, in: context)
+
+        XCTAssertEqual(stopped.count, 1)
+        XCTAssertEqual(stopped[0].id, timer.id)
+        XCTAssertEqual(stopped[0].project?.id, project.id)
+        XCTAssertEqual(stopped[0].entryDescription, "Focus")
+        XCTAssertEqual(stopped[0].source, .timer)
+        XCTAssertEqual(stopped[0].createdAt, date(-100))
+        XCTAssertEqual(stopped[0].matchedRule?.id, rule.id)
+        XCTAssertNil(stopped[0].lastHeartbeatDate)
+        assertNoOverlaps(try sortedEntries(in: context))
+    }
+
+    func testStopKeepingExistingRemovesFullyCoveredTimer() throws {
+        let context = try makeContext()
+        let existing = TimeEntry(startDate: date(0), endDate: date(100), source: .manual)
+        context.insert(existing)
+        try context.save()
+        let clock = MutableClock(date(20))
+        let service = TimerService(clock: clock)
+        let timer = try service.start(in: context)
+        let timerID = timer.id
+
+        clock.now = date(80)
+        let stopped = try service.stop(resolving: .keepExisting, in: context)
+        let entries = try sortedEntries(in: context)
+
+        XCTAssertTrue(stopped.isEmpty)
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertEqual(entries[0].id, existing.id)
+        XCTAssertFalse(entries.contains { $0.id == timerID })
+        XCTAssertNil(try service.activeTimer(in: context))
+    }
+
+    func testStopKeepingExistingSplitsTimerAndPreservesMetadata() throws {
+        let context = try makeContext()
+        let project = makeProject("Work", in: context)
+        let rule = AssignmentRule(kind: .application, matchValue: "Editor", project: project)
+        context.insert(rule)
+        context.insert(TimeEntry(startDate: date(40), endDate: date(60), source: .manual))
+        try context.save()
+        let clock = MutableClock(date(0))
+        let service = TimerService(clock: clock)
+        let timer = try service.start(project: project, description: "Focus", in: context)
+        timer.matchedRule = rule
+        timer.createdAt = date(-100)
+        timer.lastHeartbeatDate = date(20)
+        try context.save()
+
+        clock.now = date(100)
+        let stopped = try service.stop(resolving: .keepExisting, in: context)
+
+        XCTAssertEqual(stopped.map(\.startDate), [date(0), date(60)])
+        XCTAssertEqual(stopped.compactMap(\.endDate), [date(40), date(100)])
+        for fragment in stopped {
+            XCTAssertEqual(fragment.project?.id, project.id)
+            XCTAssertEqual(fragment.entryDescription, "Focus")
+            XCTAssertEqual(fragment.source, .timer)
+            XCTAssertEqual(fragment.matchedRule?.id, rule.id)
+            XCTAssertEqual(fragment.createdAt, date(-100))
+            XCTAssertNil(fragment.lastHeartbeatDate)
+        }
+        assertNoOverlaps(try sortedEntries(in: context))
+    }
+
+    func testStopKeepingExistingCreatesMultipleGaps() throws {
+        let context = try makeContext()
+        for (start, end) in [(10.0, 20.0), (40.0, 50.0), (70.0, 90.0)] {
+            context.insert(TimeEntry(startDate: date(start), endDate: date(end), source: .manual))
+        }
+        try context.save()
+        let clock = MutableClock(date(0))
+        let service = TimerService(clock: clock)
+        _ = try service.start(in: context)
+
+        clock.now = date(100)
+        let stopped = try service.stop(resolving: .keepExisting, in: context)
+
+        XCTAssertEqual(stopped.map(\.startDate), [date(0), date(20), date(50), date(90)])
+        XCTAssertEqual(stopped.compactMap(\.endDate), [date(10), date(40), date(70), date(100)])
+        assertNoOverlaps(try sortedEntries(in: context))
     }
 
     // MARK: - Heartbeat
@@ -230,6 +409,51 @@ final class TimerServiceTests: XCTestCase {
 
         XCTAssertEqual(recovered?.endDate, date(100))
         XCTAssertNil(recovered?.lastHeartbeatDate)
+    }
+
+    func testRecoverKeepsExistingEntryAndSavesOnlyFreeTimerTime() throws {
+        let context = try makeContext()
+        let existing = TimeEntry(startDate: date(40), endDate: date(60), source: .manual)
+        let timer = TimeEntry(startDate: date(0), source: .timer, lastHeartbeatDate: date(100))
+        context.insert(existing)
+        context.insert(timer)
+        try context.save()
+
+        let service = TimerService(clock: MutableClock(date(9999)))
+        let recovered = try service.recover(in: context)
+        let entries = try sortedEntries(in: context)
+        let timerEntries = entries.filter { $0.source == .timer }
+
+        XCTAssertEqual(recovered?.startDate, date(0))
+        XCTAssertEqual(recovered?.endDate, date(40))
+        XCTAssertEqual(timerEntries.map(\.startDate), [date(0), date(60)])
+        XCTAssertEqual(timerEntries.compactMap(\.endDate), [date(40), date(100)])
+        XCTAssertEqual(existing.startDate, date(40))
+        XCTAssertEqual(existing.endDate, date(60))
+        assertNoOverlaps(entries)
+    }
+
+    func testRecoverRemovesTimerFullyCoveredByExistingEntry() throws {
+        let context = try makeContext()
+        let existing = TimeEntry(startDate: date(0), endDate: date(100), source: .manual)
+        let timer = TimeEntry(startDate: date(20), source: .timer, lastHeartbeatDate: date(80))
+        let timerID = timer.id
+        context.insert(existing)
+        context.insert(timer)
+        try context.save()
+
+        let service = TimerService(clock: MutableClock(date(9999)))
+        let recovered = try service.recover(in: context)
+        let entries = try sortedEntries(in: context)
+
+        XCTAssertNil(recovered)
+        XCTAssertNil(try service.activeTimer(in: context))
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertEqual(entries[0].id, existing.id)
+        XCTAssertFalse(entries.contains { $0.id == timerID })
+        XCTAssertEqual(existing.startDate, date(0))
+        XCTAssertEqual(existing.endDate, date(100))
+        assertNoOverlaps(entries)
     }
 
     // MARK: - Presets
