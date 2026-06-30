@@ -7,6 +7,7 @@ enum ActivityTimelineError: LocalizedError, Equatable {
     case invalidSegmentRange
     case missingSegment
     case orphanSegment
+    case activityMustBeIsolated
     case runningEntry
     case overlapsUnselectedEntry
 
@@ -22,6 +23,8 @@ enum ActivityTimelineError: LocalizedError, Equatable {
             "One or more selected activity segments no longer exist."
         case .orphanSegment:
             "One or more selected activity segments have no time entry."
+        case .activityMustBeIsolated:
+            "Only an isolated Unassigned activity entry can be deleted."
         case .runningEntry:
             "Stop the running timer before changing this selection."
         case .overlapsUnselectedEntry:
@@ -32,6 +35,39 @@ enum ActivityTimelineError: LocalizedError, Equatable {
 
 @MainActor
 struct ActivityTimelineService {
+    func canDeleteActivity(_ segment: ActivitySegment) -> Bool {
+        guard let owner = segment.timeEntry,
+              let ownerEnd = owner.endDate else {
+            return false
+        }
+
+        return owner.source == .fromActivity
+            && owner.project == nil
+            && owner.activitySegments.count == 1
+            && owner.activitySegments.first?.id == segment.id
+            && owner.startDate == segment.startDate
+            && ownerEnd == segment.endDate
+    }
+
+    func deleteActivity(id: UUID, in context: ModelContext) throws {
+        let segments = try context.fetch(FetchDescriptor<ActivitySegment>())
+        guard let segment = segments.first(where: { $0.id == id }) else {
+            throw ActivityTimelineError.missingSegment
+        }
+        guard canDeleteActivity(segment), let owner = segment.timeEntry else {
+            throw ActivityTimelineError.activityMustBeIsolated
+        }
+
+        do {
+            context.delete(segment)
+            context.delete(owner)
+            try context.save()
+        } catch {
+            context.rollback()
+            throw error
+        }
+    }
+
     func assign(
         segmentIDs: Set<UUID>,
         to project: Project?,

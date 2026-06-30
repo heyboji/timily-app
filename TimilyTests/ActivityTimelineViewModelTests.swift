@@ -233,6 +233,58 @@ final class ActivityTimelineViewModelTests: XCTestCase {
         XCTAssertEqual(entries[0].project?.id, newProject.id)
     }
 
+    func testDeleteActivityClearsSelectionAfterSuccess() throws {
+        let context = try makeContext()
+        let owner = TimeEntry(
+            startDate: Date(timeIntervalSince1970: 0),
+            endDate: Date(timeIntervalSince1970: 10),
+            source: .fromActivity
+        )
+        let activity = segment(
+            Date(timeIntervalSince1970: 0),
+            Date(timeIntervalSince1970: 10),
+            owner: owner
+        )
+        context.insert(owner)
+        context.insert(activity)
+        try context.save()
+        let viewModel = ActivityTimelineViewModel()
+        viewModel.selection = [.segment(activity.id)]
+
+        viewModel.deleteActivity(activity, in: context)
+
+        XCTAssertTrue(viewModel.selection.isEmpty)
+        XCTAssertFalse(viewModel.isShowingError)
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<TimeEntry>()), 0)
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<ActivitySegment>()), 0)
+    }
+
+    func testDeleteActivityFailurePreservesSelection() throws {
+        let context = try makeContext()
+        let owner = TimeEntry(
+            startDate: Date(timeIntervalSince1970: 0),
+            endDate: Date(timeIntervalSince1970: 10),
+            source: .manual
+        )
+        let activity = segment(
+            Date(timeIntervalSince1970: 0),
+            Date(timeIntervalSince1970: 10),
+            owner: owner
+        )
+        context.insert(owner)
+        context.insert(activity)
+        try context.save()
+        let viewModel = ActivityTimelineViewModel()
+        viewModel.selection = [.segment(activity.id)]
+
+        viewModel.deleteActivity(activity, in: context)
+
+        XCTAssertEqual(viewModel.selection, [.segment(activity.id)])
+        XCTAssertTrue(viewModel.isShowingError)
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<TimeEntry>()), 1)
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<ActivitySegment>()), 1)
+    }
+
     private func utcCalendar() -> Calendar {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(secondsFromGMT: 0)!

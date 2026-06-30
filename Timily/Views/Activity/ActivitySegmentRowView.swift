@@ -3,6 +3,8 @@ import SwiftUI
 struct ActivitySegmentRowView: View {
     let segment: ActivitySegment
     let displayInterval: DateInterval
+    let canDeleteActivity: Bool
+    let onDeleteActivity: () -> Void
 
     var body: some View {
         HStack(spacing: 10) {
@@ -36,6 +38,13 @@ struct ActivitySegmentRowView: View {
         .padding(.leading, 22)
         .contentShape(.rect)
         .accessibilityElement(children: .combine)
+        .contextMenu {
+            if canDeleteActivity {
+                Button("Delete Activity", systemImage: "trash", role: .destructive) {
+                    onDeleteActivity()
+                }
+            }
+        }
     }
 
     private var contextText: String? {

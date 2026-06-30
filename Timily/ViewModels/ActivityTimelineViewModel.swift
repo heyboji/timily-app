@@ -143,6 +143,19 @@ final class ActivityTimelineViewModel {
         }
     }
 
+    func canDeleteActivity(_ segment: ActivitySegment) -> Bool {
+        service.canDeleteActivity(segment)
+    }
+
+    func deleteActivity(_ segment: ActivitySegment, in context: ModelContext) {
+        do {
+            try service.deleteActivity(id: segment.id, in: context)
+            selection.removeAll()
+        } catch {
+            show(error)
+        }
+    }
+
     func mergeSelected(from entries: [TimeEntry], in context: ModelContext) {
         do {
             let merged = try service.merge(selectedEntries(from: entries), in: context)

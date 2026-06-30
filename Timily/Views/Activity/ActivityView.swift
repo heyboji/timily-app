@@ -12,6 +12,7 @@ struct ActivityView: View {
 
     @State private var viewModel = ManualEntriesViewModel()
     @State private var timelineViewModel = ActivityTimelineViewModel()
+    @State private var pendingActivityDeletionID: UUID?
 
     var body: some View {
         @Bindable var viewModel = viewModel
@@ -49,6 +50,15 @@ struct ActivityView: View {
         .alert("Couldn’t Update Activity", isPresented: $timelineViewModel.isShowingError) {
         } message: {
             Text(timelineViewModel.errorMessage)
+        }
+        .confirmationDialog(
+            "Delete This Activity?",
+            isPresented: isConfirmingActivityDeletion
+        ) {
+            Button("Delete Activity", role: .destructive, action: deletePendingActivity)
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This permanently removes the captured activity and its Unassigned entry.")
         }
         .onChange(of: selectionSnapshot) {
             timelineViewModel.pruneSelection(to: dayEntries)
@@ -128,7 +138,9 @@ struct ActivityView: View {
         if let displayInterval = timelineViewModel.displayInterval(for: segment) {
             ActivitySegmentRowView(
                 segment: segment,
-                displayInterval: displayInterval
+                displayInterval: displayInterval,
+                canDeleteActivity: timelineViewModel.canDeleteActivity(segment),
+                onDeleteActivity: { pendingActivityDeletionID = segment.id }
             )
         }
     }
@@ -227,12 +239,34 @@ struct ActivityView: View {
         return "\(entryCount) \(entryCount == 1 ? "entry" : "entries") selected"
     }
 
+    private var isConfirmingActivityDeletion: Binding<Bool> {
+        Binding(
+            get: { pendingActivityDeletionID != nil },
+            set: { isPresented in
+                if !isPresented {
+                    pendingActivityDeletionID = nil
+                }
+            }
+        )
+    }
+
     private func assign(to project: Project?) {
         if timelineViewModel.selectedSegmentIDs.isEmpty {
             timelineViewModel.assignSelected(from: dayEntries, to: project, in: modelContext)
         } else {
             timelineViewModel.assignSelectedSegments(to: project, in: modelContext)
         }
+    }
+
+    private func deletePendingActivity() {
+        defer { pendingActivityDeletionID = nil }
+        guard let pendingActivityDeletionID,
+              let segment = dayEntries
+                .flatMap(\.activitySegments)
+                .first(where: { $0.id == pendingActivityDeletionID }) else {
+            return
+        }
+        timelineViewModel.deleteActivity(segment, in: modelContext)
     }
 
     private func presentNewEntry() {

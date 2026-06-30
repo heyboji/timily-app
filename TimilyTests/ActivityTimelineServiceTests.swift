@@ -4,6 +4,138 @@ import XCTest
 
 @MainActor
 final class ActivityTimelineServiceTests: XCTestCase {
+    func testDeleteActivityRemovesExactIsolatedPair() throws {
+        let context = try makeContext()
+        let owner = entry(0, 10)
+        let activity = segment(0, 10, entry: owner)
+        context.insert(owner)
+        context.insert(activity)
+        try context.save()
+        let service = ActivityTimelineService()
+
+        XCTAssertTrue(service.canDeleteActivity(activity))
+
+        try service.deleteActivity(id: activity.id, in: context)
+
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<TimeEntry>()), 0)
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<ActivitySegment>()), 0)
+    }
+
+    func testDeleteActivityRejectsAssignedOwnerWithoutChanges() throws {
+        let context = try makeContext()
+        let project = Project(name: "Assigned", colorHex: "#111111")
+        let owner = entry(0, 10, project: project)
+        let activity = segment(0, 10, entry: owner)
+        context.insert(project)
+        context.insert(owner)
+        context.insert(activity)
+        try context.save()
+
+        try assertDeleteRejected(activity, owner: owner, in: context)
+    }
+
+    func testDeleteActivityRejectsManualOwnerWithoutChanges() throws {
+        let context = try makeContext()
+        let owner = TimeEntry(
+            startDate: date(0),
+            endDate: date(10),
+            source: .manual
+        )
+        let activity = segment(0, 10, entry: owner)
+        context.insert(owner)
+        context.insert(activity)
+        try context.save()
+
+        try assertDeleteRejected(activity, owner: owner, in: context)
+    }
+
+    func testDeleteActivityRejectsMultiSegmentOwnerWithoutChanges() throws {
+        let context = try makeContext()
+        let owner = entry(0, 20)
+        let selected = segment(0, 10, entry: owner)
+        let sibling = segment(10, 20, entry: owner)
+        context.insert(owner)
+        context.insert(selected)
+        context.insert(sibling)
+        try context.save()
+
+        XCTAssertFalse(ActivityTimelineService().canDeleteActivity(selected))
+        XCTAssertThrowsError(
+            try ActivityTimelineService().deleteActivity(id: selected.id, in: context)
+        ) { error in
+            XCTAssertEqual(error as? ActivityTimelineError, .activityMustBeIsolated)
+        }
+
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<TimeEntry>()), 1)
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<ActivitySegment>()), 2)
+        XCTAssertEqual(selected.timeEntry?.id, owner.id)
+        XCTAssertEqual(sibling.timeEntry?.id, owner.id)
+    }
+
+    func testDeleteActivityRejectsWiderOwnerWithoutChanges() throws {
+        let context = try makeContext()
+        let owner = entry(0, 20)
+        let activity = segment(5, 15, entry: owner)
+        context.insert(owner)
+        context.insert(activity)
+        try context.save()
+
+        try assertDeleteRejected(activity, owner: owner, in: context)
+    }
+
+    func testDeleteActivityRejectsRunningOwnerWithoutChanges() throws {
+        let context = try makeContext()
+        let owner = TimeEntry(startDate: date(0), source: .fromActivity)
+        let activity = segment(0, 10, entry: owner)
+        context.insert(owner)
+        context.insert(activity)
+        try context.save()
+
+        try assertDeleteRejected(activity, owner: owner, in: context)
+    }
+
+    func testDeleteActivityRejectsOrphanWithoutChanges() throws {
+        let context = try makeContext()
+        let activity = ActivitySegment(
+            appBundleId: "com.example.app",
+            appName: "Example",
+            startDate: date(0),
+            endDate: date(10)
+        )
+        context.insert(activity)
+        try context.save()
+
+        XCTAssertFalse(ActivityTimelineService().canDeleteActivity(activity))
+        XCTAssertThrowsError(
+            try ActivityTimelineService().deleteActivity(id: activity.id, in: context)
+        ) { error in
+            XCTAssertEqual(error as? ActivityTimelineError, .activityMustBeIsolated)
+        }
+
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<TimeEntry>()), 0)
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<ActivitySegment>()), 1)
+        XCTAssertNil(activity.timeEntry)
+    }
+
+    func testDeleteActivityRejectsMissingIDWithoutChanges() throws {
+        let context = try makeContext()
+        let owner = entry(0, 10)
+        let activity = segment(0, 10, entry: owner)
+        context.insert(owner)
+        context.insert(activity)
+        try context.save()
+
+        XCTAssertThrowsError(
+            try ActivityTimelineService().deleteActivity(id: UUID(), in: context)
+        ) { error in
+            XCTAssertEqual(error as? ActivityTimelineError, .missingSegment)
+        }
+
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<TimeEntry>()), 1)
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<ActivitySegment>()), 1)
+        XCTAssertEqual(activity.timeEntry?.id, owner.id)
+    }
+
     func testAssignUpdatesSelectedEntriesAndClearsMatchedRules() throws {
         let context = try makeContext()
         let oldProject = Project(name: "Old", colorHex: "#111111")
@@ -435,6 +567,23 @@ final class ActivityTimelineServiceTests: XCTestCase {
         XCTAssertEqual(entries.count, 1)
         XCTAssertEqual(entries[0].id, owner.id)
         XCTAssertTrue(segments.allSatisfy { $0.timeEntry?.id == owner.id })
+    }
+
+    private func assertDeleteRejected(
+        _ activity: ActivitySegment,
+        owner: TimeEntry,
+        in context: ModelContext
+    ) throws {
+        XCTAssertFalse(ActivityTimelineService().canDeleteActivity(activity))
+        XCTAssertThrowsError(
+            try ActivityTimelineService().deleteActivity(id: activity.id, in: context)
+        ) { error in
+            XCTAssertEqual(error as? ActivityTimelineError, .activityMustBeIsolated)
+        }
+
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<TimeEntry>()), 1)
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<ActivitySegment>()), 1)
+        XCTAssertEqual(activity.timeEntry?.id, owner.id)
     }
 
     private func entry(
