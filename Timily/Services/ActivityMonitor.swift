@@ -9,9 +9,22 @@ nonisolated struct TrackedApplication: Equatable, Sendable {
 }
 
 nonisolated struct CompletedActivitySegment: Equatable, Sendable {
+    let id: UUID
     let application: TrackedApplication
     let startDate: Date
     let endDate: Date
+
+    init(
+        id: UUID = UUID(),
+        application: TrackedApplication,
+        startDate: Date,
+        endDate: Date
+    ) {
+        self.id = id
+        self.application = application
+        self.startDate = startDate
+        self.endDate = endDate
+    }
 }
 
 nonisolated enum ActivitySuspensionReason: Hashable, Sendable {
@@ -48,6 +61,7 @@ final class SwiftDataActivitySegmentSink: ActivitySegmentSink {
     func record(_ segment: CompletedActivitySegment) throws {
         context.insert(
             ActivitySegment(
+                id: segment.id,
                 appBundleId: segment.application.bundleIdentifier,
                 appName: segment.application.displayName,
                 startDate: segment.startDate,

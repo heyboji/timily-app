@@ -54,6 +54,8 @@
 		AA1000000000000000000045 /* DiagnosticLoggerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000045 /* DiagnosticLoggerTests.swift */; };
 		AA1000000000000000000046 /* ActivityMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000046 /* ActivityMonitor.swift */; };
 		AA1000000000000000000047 /* ActivityMonitorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000047 /* ActivityMonitorTests.swift */; };
+		AA1000000000000000000048 /* ActivityMaterializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000048 /* ActivityMaterializer.swift */; };
+		AA1000000000000000000049 /* ActivityMaterializerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2100000000000000000049 /* ActivityMaterializerTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -116,6 +118,8 @@
 		AA2100000000000000000045 /* DiagnosticLoggerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticLoggerTests.swift; sourceTree = "<group>"; };
 		AA2100000000000000000046 /* ActivityMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityMonitor.swift; sourceTree = "<group>"; };
 		AA2100000000000000000047 /* ActivityMonitorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityMonitorTests.swift; sourceTree = "<group>"; };
+		AA2100000000000000000048 /* ActivityMaterializer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityMaterializer.swift; sourceTree = "<group>"; };
+		AA2100000000000000000049 /* ActivityMaterializerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityMaterializerTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -186,6 +190,7 @@
 				AA2100000000000000000039 /* Aggregator.swift */,
 				AA2100000000000000000044 /* DiagnosticLogger.swift */,
 				AA2100000000000000000046 /* ActivityMonitor.swift */,
+				AA2100000000000000000048 /* ActivityMaterializer.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -259,6 +264,7 @@
 				AA2100000000000000000043 /* TimerViewModelTests.swift */,
 				AA2100000000000000000045 /* DiagnosticLoggerTests.swift */,
 				AA2100000000000000000047 /* ActivityMonitorTests.swift */,
+				AA2100000000000000000049 /* ActivityMaterializerTests.swift */,
 			);
 			path = TimilyTests;
 			sourceTree = "<group>";
@@ -385,6 +391,7 @@
 				AA1000000000000000000042 /* TimerControlView.swift in Sources */,
 				AA1000000000000000000044 /* DiagnosticLogger.swift in Sources */,
 				AA1000000000000000000046 /* ActivityMonitor.swift in Sources */,
+				AA1000000000000000000048 /* ActivityMaterializer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -404,6 +411,7 @@
 				AA1000000000000000000043 /* TimerViewModelTests.swift in Sources */,
 				AA1000000000000000000045 /* DiagnosticLoggerTests.swift in Sources */,
 				AA1000000000000000000047 /* ActivityMonitorTests.swift in Sources */,
+				AA1000000000000000000049 /* ActivityMaterializerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

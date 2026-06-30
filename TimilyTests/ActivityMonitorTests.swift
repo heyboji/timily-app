@@ -1,5 +1,4 @@
 import AppKit
-import SwiftData
 import XCTest
 @testable import Timily
 
@@ -155,7 +154,7 @@ final class ActivityMonitorTests: XCTestCase {
         harness.clock.now = date(20)
         harness.monitor.stop()
 
-        XCTAssertEqual(
+        assertSegments(
             harness.sink.segments,
             [segment(appA, 0, 10), segment(appB, 10, 20)]
         )
@@ -175,7 +174,7 @@ final class ActivityMonitorTests: XCTestCase {
         harness.clock.now = date(20)
         harness.monitor.stop()
 
-        XCTAssertEqual(harness.sink.segments, [segment(appA, 0, 20)])
+        assertSegments(harness.sink.segments, [segment(appA, 0, 20)])
     }
 
     func testSameTimestampSwitchDiscardsZeroDurationSegment() {
@@ -185,7 +184,7 @@ final class ActivityMonitorTests: XCTestCase {
         harness.clock.now = date(10)
         harness.monitor.stop()
 
-        XCTAssertEqual(harness.sink.segments, [segment(appB, 0, 10)])
+        assertSegments(harness.sink.segments, [segment(appB, 0, 10)])
     }
 
     func testIdleCreatesGapAndUsesLatestFrontmostApplicationOnReturn() {
@@ -203,7 +202,7 @@ final class ActivityMonitorTests: XCTestCase {
         harness.clock.now = date(550)
         harness.monitor.stop()
 
-        XCTAssertEqual(
+        assertSegments(
             harness.sink.segments,
             [segment(appA, 0, 280), segment(appB, 500, 550)]
         )
@@ -222,7 +221,7 @@ final class ActivityMonitorTests: XCTestCase {
         harness.monitor.stop()
 
         XCTAssertTrue(harness.settings.trackingPaused == false)
-        XCTAssertEqual(
+        assertSegments(
             harness.sink.segments,
             [segment(appA, 0, 10), segment(appC, 30, 40)]
         )
@@ -250,7 +249,7 @@ final class ActivityMonitorTests: XCTestCase {
         harness.monitor.stop()
 
         XCTAssertFalse(harness.settings.autoTrackingEnabled)
-        XCTAssertEqual(harness.sink.segments, [segment(appB, 10, 20)])
+        assertSegments(harness.sink.segments, [segment(appB, 10, 20)])
     }
 
     func testSleepAndSessionSuspensionsMustBothEndBeforeResuming() {
@@ -267,7 +266,7 @@ final class ActivityMonitorTests: XCTestCase {
         harness.clock.now = date(110)
         harness.monitor.stop()
 
-        XCTAssertEqual(
+        assertSegments(
             harness.sink.segments,
             [segment(appA, 0, 10), segment(appB, 100, 110)]
         )
@@ -308,7 +307,7 @@ final class ActivityMonitorTests: XCTestCase {
 
         XCTAssertEqual(harness.workspace.startCount, 1)
         XCTAssertEqual(harness.workspace.stopCount, 1)
-        XCTAssertEqual(harness.sink.segments, [segment(appA, 0, 10)])
+        assertSegments(harness.sink.segments, [segment(appA, 0, 10)])
     }
 
     func testTerminationClosesCurrentSegmentExactlyOnce() {
@@ -320,7 +319,7 @@ final class ActivityMonitorTests: XCTestCase {
 
         XCTAssertFalse(harness.monitor.isStarted)
         XCTAssertEqual(harness.workspace.stopCount, 1)
-        XCTAssertEqual(harness.sink.segments, [segment(appA, 0, 10)])
+        assertSegments(harness.sink.segments, [segment(appA, 0, 10)])
     }
 
     func testPersistenceFailureRetriesSegmentsInOrderAndContinuesTracking() {
@@ -334,7 +333,7 @@ final class ActivityMonitorTests: XCTestCase {
         harness.clock.now = date(30)
         harness.monitor.stop()
 
-        XCTAssertEqual(
+        assertSegments(
             harness.sink.segments,
             [segment(appA, 0, 10), segment(appB, 10, 20), segment(appC, 20, 30)]
         )
@@ -351,7 +350,7 @@ final class ActivityMonitorTests: XCTestCase {
 
         XCTAssertFalse(harness.monitor.isPaused)
         XCTAssertFalse(harness.settings.trackingPaused)
-        XCTAssertEqual(harness.sink.segments, [segment(appA, 0, 20)])
+        assertSegments(harness.sink.segments, [segment(appA, 0, 20)])
     }
 
     func testFailedResumeSaveKeepsMonitorPaused() {
@@ -378,22 +377,6 @@ final class ActivityMonitorTests: XCTestCase {
         XCTAssertTrue(harness.sink.segments.isEmpty)
     }
 
-    func testSwiftDataSinkPersistsRawSegment() throws {
-        let container = try PersistenceController.makeContainer(inMemory: true)
-        let sink = SwiftDataActivitySegmentSink(context: container.mainContext)
-
-        try sink.record(segment(appA, 10, 20))
-
-        let saved = try XCTUnwrap(
-            container.mainContext.fetch(FetchDescriptor<ActivitySegment>()).first
-        )
-        XCTAssertEqual(saved.appBundleId, appA.bundleIdentifier)
-        XCTAssertEqual(saved.appName, appA.displayName)
-        XCTAssertEqual(saved.startDate, date(10))
-        XCTAssertEqual(saved.endDate, date(20))
-        XCTAssertNil(saved.timeEntry)
-    }
-
     private func date(_ seconds: TimeInterval) -> Date {
         Date(timeIntervalSince1970: seconds)
     }
@@ -408,5 +391,31 @@ final class ActivityMonitorTests: XCTestCase {
             startDate: date(start),
             endDate: date(end)
         )
+    }
+
+    private func assertSegments(
+        _ actual: [CompletedActivitySegment],
+        _ expected: [CompletedActivitySegment],
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        XCTAssertEqual(
+            actual.map(SegmentSnapshot.init),
+            expected.map(SegmentSnapshot.init),
+            file: file,
+            line: line
+        )
+    }
+
+    private struct SegmentSnapshot: Equatable {
+        let application: TrackedApplication
+        let startDate: Date
+        let endDate: Date
+
+        init(_ segment: CompletedActivitySegment) {
+            application = segment.application
+            startDate = segment.startDate
+            endDate = segment.endDate
+        }
     }
 }
